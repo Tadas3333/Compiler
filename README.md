@@ -18,3 +18,14 @@ int @apskaiciuoti(int $x, int $y) => (
 
 @apskaiciuoti(5, 3);
 ```
+
+# Lexer Output Example
+```
+ID      |LN     |TYPE           |VALUE
+----------------------------------------
+0       |1      |LIT_INT        |635
+1       |2      |LIT_INT        |45
+2       |2      |LIT_STR        |ads
+3       |2      |OP_PLUS        |
+4       |2      |OP_MINUS       |
+```
