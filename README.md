@@ -12,4 +12,13 @@ pakolei ($a != 6) => (
     nutraukti;
   )
 )
+
+int @apskaiciuoti(int $x, int $y) => (
+  int $z;
+  $z = 2 + $x * $y;
+  grazinti $z;
+)
+
+@apskaiciuoti(5, 3);
+
 ```
