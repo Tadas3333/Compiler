@@ -2,7 +2,7 @@
 Lithuanian C-Like Programing Language Compiler
 
 # Syntax Example
-'''c
+```c
 int $a;
 $a = 0;
 
@@ -12,4 +12,4 @@ pakolei ($a != 6) => (
     nutraukti;
   )
 )
-'''
+```
