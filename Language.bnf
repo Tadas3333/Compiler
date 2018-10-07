@@ -1,0 +1,141 @@
+
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<digits> ::= <digit>
+            | <digits> <digit>
+<character> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P"  | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
+<characters> ::= <character>
+            | <characters> <character>
+
+<digit-or-character> ::= <digit>
+            | <character>
+<digits-and-characters> ::= <digit-or-character> | <digits-and-characters> <digit-or-character>
+
+<symbol> ::= "|" | " " | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | ">" | "=" | "<" | "?" | "@" | "[" | "\\" | "]" | "^" | "_" | "'" | "\'" | "{" | "}" | "~" | "\n" | "\r" | "\t" | "\""
+<symbols> ::= <symbol>
+            | <symbols> <symbol>
+<text> ::= <digit>
+            | <character>
+            | <symbol>
+<all-text-symbols> ::= <text> | <all-text-symbols> <text>
+
+<constant> ::= <digits>
+            | <digits> "." <digits>
+            | <digits> "."
+            | "." <digits>
+            | <variable-ident>
+
+<unary-symbol> ::= "!"
+			| "-"
+<unary-symbols> ::= <unary-symbol> | <unary-symbols> <unary-symbol>
+
+<string> ::= "'" <all-text-symbols> "'"
+            | "\"" <all-text-symbols> "\""
+
+<factor> ::= "(" <unary-expression> ")""
+            | <constant>
+			      | <function-call>
+
+<term> ::= <term> "*" <factor>
+            | <term> "/" <factor>
+            | <factor>
+
+<math> ::= <math> "+" <term>
+            | <math> "-" <term>
+            | <term>
+
+<relational-exp> ::= <math> <relational-symbol> <math>
+            | <math>
+
+<expression> ::= <relational-exp>
+            | <unary-expression> <logical-symbol> <unary-expression>
+
+<unary-expression> ::= <expression>
+            | <unary-symbol> <unary-expression>
+
+<unary-symbol> ::= "-"
+			| "!"
+			
+<logical-symbol> ::= "&&"
+            | "||"
+
+<relational-symbol> ::= "=="
+            | ">="
+            | "=<"
+            | "!="
+            | ">"
+            | "<"
+
+<variable-ident> ::= "$" <digits-and-characters>
+<type> ::= "int"
+            | "char"
+            | "float"
+<function-ident> ::= "@" <digits-and-characters>
+
+<call-arg> ::= <unary-expression>
+
+<call-args> ::= <call-arg>
+            | <call-args> "," <call-arg>
+<function-call-args> ::= "(" <call-args> ")"
+
+<dec-arg> ::= <unary-expression>
+            | <variable-declaration>
+            | <function-ident>
+<dec-args> ::= <dec-arg>
+            | <dec-args> "," <dec-arg>
+<function-dec-args> ::= "(" <dec-args> ")"
+
+<variable-declaration> ::= <type> <variable-ident>
+			| <type> <variable-ident> "=" <unary-expression>
+
+<function-call> ::= <function-ident> <function-call-args>
+            | <function-ident> "(" ")"
+
+<function-dec> ::= <type> <function-ident> <function-dec-args>
+            | <type> <function-ident> "(" ")"
+
+<variable-assignment> ::= <variable-ident> "=" <unary-expression>
+            | <variable-ident> "=" <string>
+
+<jump-statement> ::= "nutraukti"
+            | "testi"
+            | "grazinti"
+            | "grazinti" <unary-expression>
+
+<input> :: = "gi" ">>" <variable-ident>
+			| "gi" ">>"
+
+<output> :: = "go" "<<" <string>
+			| "go" "<<"
+
+<semicolon-statement> ::= <variable-declaration> ";"
+            | <function-call> ";"
+            | <variable-assignment> ";"
+            | <jump-statement> ";"
+			| <input> ";"
+			| <output> ";"
+
+<statement-region> ::= "=>" "(" <statements> ")"
+            | "=>" "(" ")"
+<function-statement> ::= <function-dec> <statement-region>
+
+<pakolei-statement> ::= "pakolei" "(" <unary-expression> ")" <statement-region>
+
+<kitaip-statement> ::= "kitaip" <statement-region>
+
+<kitaip-jei-statement> ::= "kitaip-jei" "(" <unary-expression> ")" <statement-region>
+            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
+            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
+
+<jei-statement> ::= "jei" "(" <unary-expression> ")" <statement-region>
+            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
+            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
+
+<statement> ::= <jei-statement>
+            | <pakolei-statement>
+            | <function-statement>
+            | <semicolon-statement>
+
+<statements> ::= <statement>
+            | <statements> <statement>
+
+<start> ::= <statements>
