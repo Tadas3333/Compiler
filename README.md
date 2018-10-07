@@ -1,6 +1,3 @@
-# Description
-Lithuanian C-Like Programing Language Compiler
-
 # Syntax Example
 ```c
 int $a;
@@ -20,5 +17,4 @@ int @apskaiciuoti(int $x, int $y) => (
 )
 
 @apskaiciuoti(5, 3);
-
 ```
