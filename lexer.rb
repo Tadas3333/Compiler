@@ -1,7 +1,16 @@
 
 class Lexer
-  def initialize(file_name)
+  attr_reader :line_id
+  attr_reader :printed_count
+  attr_reader :last_type
+  attr_reader :successful
+
+  def initialize(file_name, lines_read = 1, printed_count = 0, is_include_file = false)
     @file_name = file_name
+    @line_id = lines_read
+    @printed_count = printed_count
+    @is_include_file = is_include_file
+    @successful = false
   end
 
   def start
@@ -11,10 +20,9 @@ class Lexer
     end
 
     lines = File.readlines(@file_name)
-    @line_id = 1
-    @printed_count = 0
     @last_type = :TABLE
-    print_line
+    print_line unless @is_include_file
+    @local_line_id = 1
 
     # Iterate through all lines in a file
     lines.each do |line|
@@ -24,6 +32,7 @@ class Lexer
       @index = 0
       @reading_string = false
       @reading_float = false
+      @reading_include = false
       # Iterate through every symbol in a line
       while @last_type != :END_OF_LINE && @last_type != :ERROR
         scan
@@ -33,15 +42,16 @@ class Lexer
       return false if @last_type == :ERROR
 
       @line_id += 1
+      @local_line_id +=1
     end
 
     unless lines.empty?
       @last_type = :EOF
-      print_line
+      print_line unless @is_include_file
     else
       puts "File '#{@file_name}' is empty!"
     end
-
+    @successful = true
     true
   end
 
@@ -53,6 +63,13 @@ class Lexer
         @last_type = :ERROR
         print_line
         puts "Error Message: No comma to end string"
+        return @last_type
+      end
+
+      if @reading_include
+        @last_type = :ERROR
+        print_line
+        puts "Error Message: No include file specified!"
         return @last_type
       end
 
@@ -81,7 +98,12 @@ class Lexer
             else
               @reading_string = false
               @last_type = :LIT_STR
-              print_line
+
+              if @reading_include
+                include_file
+              else
+                print_line
+              end
             end
           else
             # String read mode was started with single comma
@@ -110,7 +132,12 @@ class Lexer
             else
               @reading_string = false
               @last_type = :LIT_STR
-              print_line
+
+              if @reading_include
+                include_file
+              else
+                print_line
+              end
             end
           else
             # String read mode was started with double comma
@@ -212,7 +239,7 @@ class Lexer
       else
         @last_type = :LIT_INT
       end
-    when 'a'..'z', 'A'..'Z'
+    when 'a'..'z', 'A'..'Z', '_'
       unless peek
         if @reading_string
           if (char == 'n' || char == 'r') && @last_type == :SYM_ESC
@@ -397,6 +424,60 @@ class Lexer
       else
         @last_type = :SYM_DOT
       end
+    when '&'
+      unless peek
+        if @reading_string
+          @buffer.push(char)
+          @last_type = :LIT_STR
+        else
+          # If last type was AND, print as double AND
+          if @last_type == :OP_AND
+            @last_type = :OP_DAND
+            @buffer.push(char)
+            print_line
+          else
+            # If next is AND, clear buffer and push current char
+            if scan(true) == :OP_AND
+              @last_type = :OP_AND
+              @buffer = []
+              @buffer.push(char)
+            else
+              # If no AND found on both sides, print just single AND
+              @last_type = :OP_AND
+              print_line
+            end
+          end
+        end
+      else
+        @last_type = :OP_AND
+      end
+    when '|'
+      unless peek
+        if @reading_string
+          @buffer.push(char)
+          @last_type = :LIT_STR
+        else
+          # If last type was OR, print as double OR
+          if @last_type == :OP_OR
+            @last_type = :OP_DOR
+            @buffer.push(char)
+            print_line
+          else
+            # If next is OR, clear buffer and push current char
+            if scan(true) == :OP_OR
+              @last_type = :OP_OR
+              @buffer = []
+              @buffer.push(char)
+            else
+              # If no OR found on both sides, print just single OR
+              @last_type = :OP_OR
+              print_line
+            end
+          end
+        end
+      else
+        @last_type = :OP_OR
+      end
     when '@'
       if @reading_string && !peek
         @buffer.push(char)
@@ -488,12 +569,29 @@ class Lexer
       @last_type = :KW_CONTINUE
     when 'return'
       @last_type = :KW_RETURN
+    when 'include'
+      @reading_include = true
+      @last_type = :KW_INCLUDE
+      # Do not print this key word
+      return true
     else
       return false
     end
 
     print_line
     true
+  end
+
+  def include_file
+    @reading_include = false
+    @buffer = @buffer.join
+    inc = Lexer.new(@buffer, @line_id, @printed_count, true)
+    inc.start
+
+    return @last_type = :ERROR if inc.last_type == :ERROR || inc.successful == false
+
+    @line_id = inc.line_id-1
+    @printed_count = inc.printed_count
   end
 
   def print_line
@@ -505,16 +603,16 @@ class Lexer
     when :OP_PLUS, :OP_MINUS, :OP_MULTIPLY, :OP_DIVIDE, :SYM_COM, :SYM_SEMICOL,
          :SYM_ETA, :SYM_DOL, :SYM_ESC, :OP_BRACE_O, :OP_BRACE_C, :OP_PAREN_O,
          :OP_PAREN_C, :KW_ELSEIF, :KW_ELSE, :KW_FLOAT, :KW_CHAR, :KW_WHILE,
-         :KW_BREAK, :KW_CONTINUE, :KW_RETURN, :SYM_DOT
+         :KW_BREAK, :KW_CONTINUE, :KW_RETURN, :SYM_DOT, :OP_DAND
       print_formated_line(@last_type, '')
     when :EOF, :OP_E, :OP_DE, :OP_G, :OP_L, :OP_GE, :OP_LE, :OP_N, :OP_NE,
-        :KW_IF, :KW_INT
+        :KW_IF, :KW_INT, :OP_AND, :OP_OR, :OP_DOR
       print_formated_line("#{@last_type}\t", '')
     when :TABLE
       puts "ID\t|LN\t|TYPE\t\t|VALUE"
       puts "----------------------------------------"
     when :ERROR
-      puts "Error! File: #{@file_name} Line: #{@line_id} Index: #{@index}"
+      puts "Error! File: #{@file_name} Line: #{@local_line_id} Index: #{@index}"
     else
       puts "Unknown @last_type!"
     end
