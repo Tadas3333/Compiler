@@ -16,15 +16,17 @@ class Lexer
 
     # Read a file
     processor = CharProcessor.new(@tokens)
+    successful = true
     File.open(@file_name,'r').each_char do |char|
       unless processor.process(char)
+        successful = false
         break
       end
     end
-    processor.process(:EOF)
+    processor.process(:EOF) if successful == true
     @tokens
   end
 end
 
-lx = Lexer.new('lexer_input_3.txt')
+lx = Lexer.new('lexer_input.txt')
 tokens = lx.get_tokens

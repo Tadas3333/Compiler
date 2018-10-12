@@ -1,0 +1,3 @@
+if elseif else int float char while break continue return include asd
++-*/;,.
+"asd"

@@ -3,7 +3,6 @@ require_relative 'table'
 class CharProcessor
   def initialize(tokens)
     @table = Table.new
-    @table.table_top
 
     @tokens = tokens
     @values = []
@@ -381,9 +380,40 @@ class CharProcessor
     end
   end
 
+  def get_keyword
+    case @buffer
+    when 'if'
+      return :KW_IF
+    when 'elseif'
+      return :KW_ELSEIF
+    when 'else'
+      return :KW_ELSE
+    when 'int'
+      return :KW_INT
+    when 'float'
+      return :KW_FLOAT
+    when 'char'
+      return :KW_CHAR
+    when 'while'
+      return :KW_WHILE
+    when 'break'
+      return :KW_BREAK
+    when 'continue'
+      return :KW_CONTINUE
+    when 'return'
+      return :KW_RETURN
+    when 'include'
+      return :KW_INCLUDE
+    else
+      return :IDENT
+    end
+  end
+
   def complete(type)
     # Display table when it's end of file
     if type == :EOF
+      @table.table_top
+
       @tokens.push(:EOF)
       @values.push('')
       @token_lines.push(@line_id)
@@ -394,6 +424,11 @@ class CharProcessor
 
     # Merge array to a string
     @buffer = @buffer.join
+
+    # Check for a keyword (will set type to KW_ if it's a keyword)
+    if type == :IDENT
+      type = get_keyword
+    end
 
     # Save values
     @tokens.push(type)
