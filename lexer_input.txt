@@ -1,7 +1,0 @@
-if foo > bar {
-  // comment
-  print("hello world")
-  return >=>+ 123
-}
-
-include 'lexer_input_2.txt'
