@@ -14,7 +14,7 @@ class Table
       case token
       when :LIT_INT, :LIT_STRING, :LIT_FLOAT, :IDENT, :STRING
         if token.length > 6
-          show_token_with_value_longtoken(token, lines[index], values[index])
+          show_token_with_value_longtype(token, lines[index], values[index])
         else
           show_token_with_value(token, lines[index], values[index])
         end

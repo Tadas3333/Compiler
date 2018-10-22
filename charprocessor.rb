@@ -23,6 +23,7 @@ class CharProcessor
   - :LIT_INT
   - :LIT_FLOAT
   - :STRING
+  - :COMMENT
 =end
 
   def process(char)
@@ -48,6 +49,8 @@ class CharProcessor
         end
 
         add_to_buffer(char)
+      when :COMMENT
+        # Do nothing
       else # :NON
         @state = :IDENT
         add_to_empty_buffer(char)
@@ -67,6 +70,8 @@ class CharProcessor
           @state = :LIT_INT
           add_to_empty_buffer(char)
         end
+      when :COMMENT
+        # Do nothing
       else # :LIT_INT, :LIT_FLOAT, :STRING, :IDENT
         add_to_buffer(char)
       end
@@ -86,6 +91,8 @@ class CharProcessor
         complete(:SYM_DOT)
       when :STRING
         add_to_buffer(char)
+      when :COMMENT
+        # Do nothing
       else #:IDENT
         complete(:IDENT)
         add_to_empty_buffer(char)
@@ -114,6 +121,8 @@ class CharProcessor
         @state = :STRING
         empty_buffer
         @string_symbol = char
+      when :COMMENT
+        # Do nothing
       else #:STRING
         # Check if this symbol was escaped
         if @escape_symbol_used == true
@@ -147,6 +156,8 @@ class CharProcessor
         complete(:IDENT)
         add_to_empty_buffer(char)
         complete(:SYM_ESC)
+      when :COMMENT
+        # Do nothing
       else #:STRING
         if @escape_symbol_used == true
           add_to_buffer(char)
@@ -164,6 +175,8 @@ class CharProcessor
       when :LIT_INT, :LIT_FLOAT, :IDENT
         complete(@state)
         complete_sym_equal(char)
+      when :COMMENT
+        # Do nothing
       else #:NON
         complete_sym_equal(char)
       end
@@ -177,6 +190,8 @@ class CharProcessor
         complete(@state)
         add_to_empty_buffer(char)
         complete(:OP_AND)
+      when :COMMENT
+        # Do nothing
       else #:NON
         if get_last_token == :OP_AND && @first_line_symbol == false
           remove_last_token
@@ -198,6 +213,8 @@ class CharProcessor
         complete(@state)
         add_to_empty_buffer(char)
         complete(:OP_OR)
+      when :COMMENT
+        # Do nothing
       else #:NON
         if get_last_token == :OP_OR && @first_line_symbol == false
           remove_last_token
@@ -207,6 +224,28 @@ class CharProcessor
         else
           add_to_empty_buffer(char)
           complete(:OP_OR)
+        end
+      end
+
+    ############################################################################
+    when '/'
+      case @state
+      when :STRING
+        add_to_buffer(char)
+      when :LIT_INT, :LIT_FLOAT, :IDENT
+        complete(@state)
+        add_to_empty_buffer(char)
+        complete(:OP_DIVIDE)
+      when :COMMENT
+        # Do nothing
+      else #:NON
+        # Check for comment start
+        if get_last_token == :OP_DIVIDE && @first_line_symbol == false
+          remove_last_token
+          @state = :COMMENT
+        else
+          add_to_empty_buffer(char)
+          complete(:OP_DIVIDE)
         end
       end
 
@@ -221,10 +260,6 @@ class CharProcessor
     ############################################################################
     when '*'
       complete_simple_sym(char,:OP_MULTIPLY)
-
-    ############################################################################
-    when '/'
-      complete_simple_sym(char,:OP_DIVIDE)
 
     ############################################################################
     when '>'
@@ -275,7 +310,7 @@ class CharProcessor
       case @state
       when :STRING
         add_to_buffer(char)
-      when :NON # Do nothing
+      when :NON, :COMMENT # Do nothing
       else # :LIT_INT, :LIT_FLOAT, :IDENT
         complete(@state)
       end
@@ -287,6 +322,9 @@ class CharProcessor
         print_error("No ending comma was found!")
         return false
       when :NON
+        @first_line_symbol = true
+      when :COMMENT
+        @state = :NON
         @first_line_symbol = true
       else # :LIT_INT, :LIT_FLOAT, :IDENT
         complete(@state)
@@ -301,6 +339,9 @@ class CharProcessor
         return false
       when :NON
         @first_line_symbol = true
+      when :COMMENT
+        @state = :NON
+        @first_line_symbol = true
       else # :LIT_INT, :LIT_FLOAT, :IDENT
         complete(@state)
         @first_line_symbol = true
@@ -314,7 +355,7 @@ class CharProcessor
       when :STRING
         print_error("No ending comma was found!")
         return false
-      when :NON # Do nothing
+      when :NON, :COMMENT # Do nothing
       else # :LIT_INT, :LIT_FLOAT, :IDENT
         complete(@state)
       end
@@ -374,6 +415,8 @@ class CharProcessor
       complete(@state)
       add_to_empty_buffer(char)
       complete(token)
+    when :COMMENT
+      # Do nothing
     else #:NON
       add_to_empty_buffer(char)
       complete(token)
@@ -402,8 +445,6 @@ class CharProcessor
       return :KW_CONTINUE
     when 'return'
       return :KW_RETURN
-    when 'include'
-      return :KW_INCLUDE
     else
       return :IDENT
     end
