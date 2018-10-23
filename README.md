@@ -28,7 +28,7 @@ apskaiciuoti(5, 3);
 // comment
 "moo 34a 33" // comment
 "\\\"'\'"
-if elseif else continue break return char float int
+char float int jei kitjei kitaip testi nutraukti grazinti
 ```
 ```
 ID      |LN     |TYPE           |VALUE
