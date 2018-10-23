@@ -22,6 +22,9 @@ class CharProcessor
   - :IDENT
   - :LIT_INT
   - :LIT_FLOAT
+  - :STRING_SCOM
+  - :STRING_DCOM
+  - :ESCAPE
 =end
 
   def process(cur_char, next_char)
@@ -35,6 +38,9 @@ class CharProcessor
     when :IDENT; process_ident
     when :LIT_INT; process_lit_int
     when :LIT_FLOAT; process_lit_float
+    when :STRING_SCOM; process_string_scom
+    when :STRING_DCOM; process_string_dcom
+    when :ESCAPE; process_escape
     else; raise "Unprocessed state #{@state}"
     end
 
@@ -47,6 +53,56 @@ class CharProcessor
 
     @skip_next = true if ((@cur_type == :S_NL && @next_type == :S_CR) ||
                           (@cur_type == :S_CR && @next_type == :S_NL))
+  end
+
+  # Process operator AND
+  def process_and
+    if @next_type == :OP_AND
+      complete(:OP_DAND)
+      @skip_next = true
+    else
+      complete(:OP_AND)
+    end
+  end
+
+  # Process operator OR
+  def process_or
+    if @next_type == :OP_OR
+      complete(:OP_DOR)
+      @skip_next = true
+    else
+      complete(:OP_OR)
+    end
+  end
+
+  # Process operator GREATER
+  def process_greater
+    if @next_type == :OP_E
+      complete(:OP_GE)
+      @skip_next = true
+    else
+      complete(:OP_G)
+    end
+  end
+
+  # Process operator LESS
+  def process_less
+    if @next_type == :OP_E
+      complete(:OP_LE)
+      @skip_next = true
+    else
+      complete(:OP_L)
+    end
+  end
+
+  # Process operator EQUAL
+  def process_equal
+    if @next_type == :OP_E
+      complete(:OP_DE)
+      @skip_next = true
+    else
+      complete(:OP_E)
+    end
   end
 
   # Complete token
