@@ -1,3 +1,5 @@
+require_relative 'keywords'
+
 class CharProcessor
   # Process :DEFAULT state
   def process_default
@@ -37,8 +39,17 @@ class CharProcessor
     @buffer.push(@cur_char)
 
     # Check next character
-    complete(:IDENT, @buffer.join) if (@next_type != :LETTER &&
-                                       @next_type != :NUMBER)
+    if (@next_type != :LETTER && @next_type != :NUMBER)
+      buff = @buffer.join
+      keywords = Keywords.new
+      type = keywords.get_keyword(buff)
+
+      if type != :IDENT
+        complete(type, '')
+      else
+        complete(type, buff)
+      end
+    end
   end
 
   # Process :LIT_INT state
