@@ -24,6 +24,7 @@ class CharType
     when '<'; @type = :OP_L
     when '!'; @type = :OP_N
     when ','; @type = :S_COM
+    when ':'; @type = :S_COL
     when '@'; @type = :S_AT
     when '$'; @type = :S_DOL
     when '('; @type = :OP_PAREN_O

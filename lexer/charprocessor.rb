@@ -25,6 +25,7 @@ class CharProcessor
   - :STRING_SCOM
   - :STRING_DCOM
   - :ESCAPE
+  - :COMMENT
 =end
 
   def process(cur_char, next_char)
@@ -41,6 +42,7 @@ class CharProcessor
     when :STRING_SCOM; process_string_scom
     when :STRING_DCOM; process_string_dcom
     when :ESCAPE; process_escape
+    when :COMMENT; process_comment
     else; raise "Unprocessed state #{@state}"
     end
 
@@ -102,6 +104,16 @@ class CharProcessor
       @skip_next = true
     else
       complete(:OP_E)
+    end
+  end
+
+  # Process operator NOT
+  def process_not
+    if @next_type == :OP_E
+      complete(:OP_NE)
+      @skip_next = true
+    else
+      complete(:OP_N)
     end
   end
 

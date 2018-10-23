@@ -65,11 +65,11 @@
             | ">"
             | "<"
 
-<variable-ident> ::= "$" <digits-and-characters>
+<variable-ident> ::= <digits-and-characters>
 <type> ::= "int"
             | "char"
             | "float"
-<function-ident> ::= "@" <digits-and-characters>
+<function-ident> ::= <digits-and-characters>
 
 <call-arg> ::= <unary-expression>
 
@@ -114,8 +114,8 @@
 			| <input> ";"
 			| <output> ";"
 
-<statement-region> ::= "=>" "(" <statements> ")"
-            | "=>" "(" ")"
+<statement-region> ::= ":" "(" <statements> ")"
+            | ":" "(" ")"
 <function-statement> ::= <function-dec> <statement-region>
 
 <pakolei-statement> ::= "pakolei" "(" <unary-expression> ")" <statement-region>

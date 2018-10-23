@@ -15,15 +15,22 @@ class CharProcessor
     when :OP_G; process_greater
     when :OP_L; process_less
     when :OP_E; process_equal
+    when :OP_N; process_not
+    when :OP_DIVIDE
+      if @next_type == :OP_DIVIDE
+        process_comment
+      else
+        complete(@cur_type)
+      end
     when :S_DOT
       if @next_type == :NUMBER
        process_lit_float
      else
        complete(@cur_type)
      end
-    when :S_SEMICOL, :OP_PLUS, :OP_MINUS, :OP_MULTIPLY, :OP_DIVIDE, :S_COM,
+    when :S_SEMICOL, :OP_PLUS, :OP_MINUS, :OP_MULTIPLY, :S_COM,
          :S_AT, :S_DOL, :OP_PAREN_O, :OP_PAREN_C, :OP_BRACE_O, :OP_BRACE_C,
-         :SYM_ESCP, :OP_N
+         :SYM_ESCP, :S_COL, :S_ESC
       complete(@cur_type)
     when :S_NL, :S_CR; process_new_line
     when :SPACE, :S_EOF; # Do nothing
@@ -31,6 +38,7 @@ class CharProcessor
     end
   end
 
+  ##############################################################################
   # Process :IDENT state
   def process_ident
     @state = :IDENT
@@ -52,6 +60,7 @@ class CharProcessor
     end
   end
 
+  ##############################################################################
   # Process :LIT_INT state
   def process_lit_int
     @state = :LIT_INT
@@ -69,6 +78,7 @@ class CharProcessor
     end
   end
 
+  ##############################################################################
   # Process :LIT_FLOAT state
   def process_lit_float
     @state = :LIT_FLOAT
@@ -77,20 +87,22 @@ class CharProcessor
     @buffer.push(@cur_char)
 
     # Check next character
-    Error.new('Invalid float', @status) if @next_type == :LETTER
+    Error.new('Invalid float', @status) if (@next_type == :LETTER ||
+                                            @next_type == :S_DOT)
     complete(:LIT_FLOAT, @buffer.join) if @next_type != :NUMBER
   end
 
+  ##############################################################################
   # Process :STRING_SCOM state
   def process_string_scom
-    if @state != :STRING_DCOM
-      @state = :STRING_DCOM
+    if @state != :STRING_SCOM
+      @state = :STRING_SCOM
       return # Don't save first comma symbol
     end
 
     case @cur_type
     when :S_SCOM
-      complete(:STRING, @buffer.join)
+      complete(:LIT_STR, @buffer.join)
     when :S_NL, :S_CR
       Error.new('No string end was found', @status)
     when :S_ESC
@@ -100,13 +112,14 @@ class CharProcessor
       @buffer.push(@cur_char)
 
       if @next_type == :S_SCOM
-        complete(:STRING, @buffer.join)
+        complete(:LIT_STR, @buffer.join)
         @skip_next = true
         @state = :DEFAULT
       end
     end
   end
 
+  ##############################################################################
   # Process :STRING_DCOM state
   def process_string_dcom
     if @state != :STRING_DCOM
@@ -116,7 +129,7 @@ class CharProcessor
 
     case @cur_type
     when :S_DCOM
-      complete(:STRING, @buffer.join)
+      complete(:LIT_STR, @buffer.join)
     when :S_NL, :S_CR
       Error.new('No string end was found', @status)
     when :S_ESC
@@ -126,12 +139,13 @@ class CharProcessor
       @buffer.push(@cur_char)
 
       if @next_type == :S_DCOM
-        complete(:STRING, @buffer.join)
+        complete(:LIT_STR, @buffer.join)
         @skip_next = true
       end
     end
   end
 
+  ##############################################################################
   # Process :ESCAPE state
   def process_escape
     Error.new('No string end was found', @status) if (@cur_type == :S_NL ||
@@ -150,5 +164,15 @@ class CharProcessor
     end
 
     @state = @old_state
+  end
+
+  ##############################################################################
+  # Process :COMMENT state
+  def process_comment
+    @state = :COMMENT
+
+    if @next_type == :S_NL || @next_type == :S_CR
+      @state = :DEFAULT
+    end
   end
 end
