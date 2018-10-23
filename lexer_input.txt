@@ -1,7 +1,0 @@
-if elseif else int float char while break continue return asd
-+-*/;,.
-"asd"
-// Just a comment
-keke lol
-bubu // Again comment
-ignored

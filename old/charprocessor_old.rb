@@ -182,52 +182,6 @@ class CharProcessor
       end
 
     ############################################################################
-    when '&'
-      case @state
-      when :STRING
-        add_to_buffer(char)
-      when :LIT_INT, :LIT_FLOAT, :IDENT
-        complete(@state)
-        add_to_empty_buffer(char)
-        complete(:OP_AND)
-      when :COMMENT
-        # Do nothing
-      else #:NON
-        if get_last_token == :OP_AND && @first_line_symbol == false
-          remove_last_token
-          add_to_empty_buffer(char)
-          add_to_buffer(char)
-          complete(:OP_DAND)
-        else
-          add_to_empty_buffer(char)
-          complete(:OP_AND)
-        end
-      end
-
-    ############################################################################
-    when '|'
-      case @state
-      when :STRING
-        add_to_buffer(char)
-      when :LIT_INT, :LIT_FLOAT, :IDENT
-        complete(@state)
-        add_to_empty_buffer(char)
-        complete(:OP_OR)
-      when :COMMENT
-        # Do nothing
-      else #:NON
-        if get_last_token == :OP_OR && @first_line_symbol == false
-          remove_last_token
-          add_to_empty_buffer(char)
-          add_to_buffer(char)
-          complete(:OP_DOR)
-        else
-          add_to_empty_buffer(char)
-          complete(:OP_OR)
-        end
-      end
-
-    ############################################################################
     when '/'
       case @state
       when :STRING
@@ -250,60 +204,22 @@ class CharProcessor
       end
 
     ############################################################################
-    when '+'
-      complete_simple_sym(char,:OP_PLUS)
-
-    ############################################################################
-    when '-'
-      complete_simple_sym(char,:OP_MINUS)
-
-    ############################################################################
-    when '*'
-      complete_simple_sym(char,:OP_MULTIPLY)
-
-    ############################################################################
-    when '>'
-      complete_simple_sym(char,:OP_G)
-
-    ############################################################################
-    when '<'
-      complete_simple_sym(char,:OP_L)
-
-    ############################################################################
-    when '!'
-      complete_simple_sym(char,:OP_N)
-
-    ############################################################################
-    when ','
-      complete_simple_sym(char,:SYM_COM)
-
-    ############################################################################
-    when '@'
-      complete_simple_sym(char,:SYM_AT)
-
-    ############################################################################
-    when '$'
-      complete_simple_sym(char,:SYM_DOL)
-
-    ############################################################################
-    when '('
-      complete_simple_sym(char,:OP_PAREN_O)
-
-    ############################################################################
-    when ')'
-      complete_simple_sym(char,:OP_PAREN_C)
-
-    ############################################################################
-    when '{'
-      complete_simple_sym(char,:OP_BRACE_O)
-
-    ############################################################################
-    when '}'
-      complete_simple_sym(char,:OP_BRACE_C)
-
-    ############################################################################
-    when ';'
-      complete_simple_sym(char,:SYM_SEMICOL)
+    when '&'; complete_log_op(char, :OP_AND, :OP_DAND)
+    when '|'; complete_log_op(char, :OP_OR, :OP_DOR)
+    when '+'; complete_simple_sym(char,:OP_PLUS)
+    when '-'; complete_simple_sym(char,:OP_MINUS)
+    when '*'; complete_simple_sym(char,:OP_MULTIPLY)
+    when '>'; complete_simple_sym(char,:OP_G)
+    when '<'; complete_simple_sym(char,:OP_L)
+    when '!'; complete_simple_sym(char,:OP_N)
+    when ','; complete_simple_sym(char,:SYM_COM)
+    when '@'; complete_simple_sym(char,:SYM_AT)
+    when '$'; complete_simple_sym(char,:SYM_DOL)
+    when '('; complete_simple_sym(char,:OP_PAREN_O)
+    when ')'; complete_simple_sym(char,:OP_PAREN_C)
+    when '{'; complete_simple_sym(char,:OP_BRACE_O)
+    when '}'; complete_simple_sym(char,:OP_BRACE_C)
+    when ';'; complete_simple_sym(char,:SYM_SEMICOL)
 
     ############################################################################
     when ' '
@@ -317,35 +233,11 @@ class CharProcessor
 
     ############################################################################
     when "\r"
-      case @state
-      when :STRING
-        print_error("No ending comma was found!")
-        return false
-      when :NON
-        @first_line_symbol = true
-      when :COMMENT
-        @state = :NON
-        @first_line_symbol = true
-      else # :LIT_INT, :LIT_FLOAT, :IDENT
-        complete(@state)
-        @first_line_symbol = true
-      end
+      return false unless complete_end_of_line
 
     ############################################################################
     when "\n"
-      case @state
-      when :STRING
-        print_error("No ending comma was found!")
-        return false
-      when :NON
-        @first_line_symbol = true
-      when :COMMENT
-        @state = :NON
-        @first_line_symbol = true
-      else # :LIT_INT, :LIT_FLOAT, :IDENT
-        complete(@state)
-        @first_line_symbol = true
-      end
+      return false unless complete_end_of_line
 
       @line_id += 1
 
@@ -420,6 +312,48 @@ class CharProcessor
     else #:NON
       add_to_empty_buffer(char)
       complete(token)
+    end
+  end
+
+  # Complete End of Line Symols (\r and \n)
+  def complete_end_of_line
+    case @state
+    when :STRING
+      print_error("No ending comma was found!")
+      return false
+    when :NON
+      @first_line_symbol = true
+    when :COMMENT
+      @state = :NON
+      @first_line_symbol = true
+    else # :LIT_INT, :LIT_FLOAT, :IDENT
+      complete(@state)
+      @first_line_symbol = true
+    end
+    true
+  end
+
+  # Complete Logical Operator
+  def complete_log_op(char, type, type_double)
+    case @state
+    when :STRING
+      add_to_buffer(char)
+    when :LIT_INT, :LIT_FLOAT, :IDENT
+      complete(@state)
+      add_to_empty_buffer(char)
+      complete(type)
+    when :COMMENT
+      # Do nothing
+    else #:NON
+      if get_last_token == type && @first_line_symbol == false
+        remove_last_token
+        add_to_empty_buffer(char)
+        add_to_buffer(char)
+        complete(type_double)
+      else
+        add_to_empty_buffer(char)
+        complete(type)
+      end
     end
   end
 
