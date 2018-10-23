@@ -21,12 +21,12 @@ apskaiciuoti(5, 3);
 
 # Lexer Example
 ```c
-635 asd 54.578 33. .34 6375.745.81.
->>=!!====+-/\\\*,@$(){}
+635 asd 54.578 33. .34 6375.745 .81 .
+>>=!!====+-/\\\*,@$(){}:
 'str 124as 4 +-/\\*,@$"(){}\r\n!. 3.3 .3 3..'
 '\\\"\''
 // comment
-"asd 34a 33" // comment
+"moo 34a 33" // comment
 "\\\"'\'"
 if elseif else continue break return char float int
 ```
