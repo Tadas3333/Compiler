@@ -49,6 +49,11 @@ class CharProcessor
     @status.next_index
   end
 
+  def finish(char)
+    process(char, :EOF)
+    complete(:EOF)
+  end
+
   # Process new line symbol
   def process_new_line
     @status.next_line

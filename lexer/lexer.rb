@@ -30,7 +30,7 @@ class Lexer
       end
     end
 
-    processor.process(last_char, :EOF)
+    processor.finish(last_char)
     @tokens
   end
 end
