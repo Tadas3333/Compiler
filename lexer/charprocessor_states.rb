@@ -152,11 +152,9 @@ class CharProcessor
                                                       @cur_type == :S_CR)
     case @cur_char
     when 'n'
-      sym = "*NEWLINE*"
-      @buffer.concat(sym.split)
+      @buffer.push("\n")
     when 'r'
-      sym = "*CARRIAGE*"
-      @buffer.concat(sym.split)
+      @buffer.push("\r")
     when "\\", "'", "\""
       @buffer.push(@cur_char)
     else
