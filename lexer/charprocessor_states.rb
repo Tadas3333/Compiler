@@ -21,6 +21,7 @@ class CharProcessor
     when '*'; complete(:OP_MULTIPLY, nil)
     when ','; complete(:S_COM, nil)
     when ':'; complete(:S_COL, nil)
+    when ';'; complete(:S_SCOL, nil)
     when '@'; complete(:S_AT, nil)
     when '$'; complete(:S_DOL, nil)
     when '('; complete(:OP_PAREN_O, nil)
