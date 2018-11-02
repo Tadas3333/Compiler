@@ -1,4 +1,5 @@
 require_relative 'charprocessor'
+require_relative '../status'
 
 class Lexer
   def initialize(file_name)
@@ -15,7 +16,8 @@ class Lexer
     end
 
     # Read a file
-    processor = CharProcessor.new(@tokens)
+    status = Status.new(@file_name)
+    processor = CharProcessor.new(@tokens, status)
     last_char = :NON
 
     File.open(@file_name,'r').each_char do |char|

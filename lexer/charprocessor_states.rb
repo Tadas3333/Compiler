@@ -3,37 +3,50 @@ require_relative 'keywords'
 class CharProcessor
   # Process :DEFAULT state
   def process_default
-    @buffer = []
+    @buffer = "";
 
-    case @cur_type
-    when :LETTER; process_ident
-    when :NUMBER; process_lit_int
-    when :S_SCOM; process_string_scom
-    when :S_DCOM; process_string_dcom
-    when :OP_AND; process_and
-    when :OP_OR; process_or
-    when :OP_G; process_greater
-    when :OP_L; process_less
-    when :OP_E; process_equal
-    when :OP_N; process_not
-    when :OP_DIVIDE
-      if @next_type == :OP_DIVIDE
-        process_comment
+    case @cur_char
+    when 'a'..'z', 'A'..'Z'; process_ident
+    when '0'..'9'; process_lit_int
+    when "'"; process_string_scom
+    when "\""; process_string_dcom
+    when '&'; process_and
+    when '|'; process_or
+    when '>'; process_relational(:OP_G, :OP_GE)
+    when '<'; process_relational(:OP_L, :OP_LE)
+    when '='; process_relational(:OP_E, :OP_DE)
+    when '!'; process_relational(:OP_N, :OP_NE)
+    when '+'; complete(:OP_PLUS, nil)
+    when '-'; process_minus
+    when '*'; complete(:OP_MULTIPLY, nil)
+    when ','; complete(:S_COM, nil)
+    when ':'; complete(:S_COL, nil)
+    when '@'; complete(:S_AT, nil)
+    when '$'; complete(:S_DOL, nil)
+    when '('; complete(:OP_PAREN_O, nil)
+    when ')'; complete(:OP_PAREN_C, nil)
+    when '{'; complete(:OP_BRACE_O, nil)
+    when '}'; complete(:OP_BRACE_C, nil)
+    when "\\"; complete(:S_ESC, nil)
+    when "\n", "\r"; process_new_line
+    when " ", :S_EOF; # Do nothing
+    when '/'
+      if @next_char == '/'
+        process_single_line_comment
+        @skip_next = true
+      elsif @next_char == '*'
+        process_multi_line_comment
+        @skip_next = true
       else
-        complete(@cur_type)
+        complete(:OP_DIVIDE, nil)
       end
-    when :S_DOT
-      if @next_type == :NUMBER
-       process_lit_float
-     else
-       complete(@cur_type)
-     end
-    when :S_SEMICOL, :OP_PLUS, :OP_MINUS, :OP_MULTIPLY, :S_COM,
-         :S_AT, :S_DOL, :OP_PAREN_O, :OP_PAREN_C, :OP_BRACE_O, :OP_BRACE_C,
-         :SYM_ESCP, :S_COL, :S_ESC
-      complete(@cur_type)
-    when :S_NL, :S_CR; process_new_line
-    when :SPACE, :S_EOF; # Do nothing
+    when '.'
+      case @next_char
+      when'0'..'9'
+        process_lit_float
+      else
+        complete(:S_DOT, nil)
+      end
     else; raise "Unprocessed character type #{@cur_type}"
     end
   end
@@ -44,18 +57,20 @@ class CharProcessor
     @state = :IDENT
 
     # Add current character to the buffer
-    @buffer.push(@cur_char)
+    @buffer += @cur_char
 
     # Check next character
-    if (@next_type != :LETTER && @next_type != :NUMBER)
-      buff = @buffer.join
+    case @next_char
+    when 'a'..'z', 'A'..'Z', '0'..'9'
+      # Do nothing
+    else
       keywords = Keywords.new
-      type = keywords.get_keyword(buff)
+      type = keywords.get_keyword(@buffer)
 
       if type != :IDENT
-        complete(type, '')
+        complete(type, nil)
       else
-        complete(type, buff)
+        complete(type, @buffer)
       end
     end
   end
@@ -66,15 +81,18 @@ class CharProcessor
     @state = :LIT_INT
 
     # Add current character to the buffer
-    @buffer.push(@cur_char)
+    @buffer += @cur_char
 
     # Check next character
-    Error.new('Invalid integer', @status) if @next_type == :LETTER
-
-    if @next_type == :S_DOT
-      @state = :LIT_FLOAT
-    elsif @next_type != :NUMBER
-      complete(:LIT_INT, @buffer.join)
+    case @next_char
+    when 'a'..'z', 'A'..'Z'
+      Error.new('Invalid integer', @status)
+    when '.'
+        @state = :LIT_FLOAT
+    when '0'..'9'
+      # Do nothing
+    else
+      complete(:LIT_INT, @buffer.to_i)
     end
   end
 
@@ -84,12 +102,17 @@ class CharProcessor
     @state = :LIT_FLOAT
 
     # Add current character to the buffer
-    @buffer.push(@cur_char)
+    @buffer += @cur_char
 
     # Check next character
-    Error.new('Invalid float', @status) if (@next_type == :LETTER ||
-                                            @next_type == :S_DOT)
-    complete(:LIT_FLOAT, @buffer.join) if @next_type != :NUMBER
+    case @next_char
+    when 'a'..'z', 'A'..'Z', '.'
+      Error.new('Invalid float', @status)
+    when '0'..'9'
+      # Do nothing
+    else
+      complete(:LIT_FLOAT, @buffer.to_f)
+    end
   end
 
   ##############################################################################
@@ -100,19 +123,19 @@ class CharProcessor
       return # Don't save first comma symbol
     end
 
-    case @cur_type
-    when :S_SCOM
-      complete(:LIT_STR, @buffer.join)
-    when :S_NL, :S_CR
+    case @cur_char
+    when "'"
+      complete(:LIT_STR, @buffer)
+    when "\n", "\r"
       Error.new('No string end was found', @status)
-    when :S_ESC
+    when "\\"
       @old_state = @state
       @state = :ESCAPE
     else
-      @buffer.push(@cur_char)
+      @buffer += @cur_char
 
-      if @next_type == :S_SCOM
-        complete(:LIT_STR, @buffer.join)
+      if @next_char == "'"
+        complete(:LIT_STR, @buffer)
         @skip_next = true
         @state = :DEFAULT
       end
@@ -127,19 +150,19 @@ class CharProcessor
       return # Don't save first comma symbol
     end
 
-    case @cur_type
-    when :S_DCOM
-      complete(:LIT_STR, @buffer.join)
-    when :S_NL, :S_CR
+    case @cur_char
+    when "\""
+      complete(:LIT_STR, @buffer)
+    when "\n", "\r"
       Error.new('No string end was found', @status)
-    when :S_ESC
+    when "\\"
       @old_state = @state
       @state = :ESCAPE
     else
-      @buffer.push(@cur_char)
+      @buffer += @cur_char
 
-      if @next_type == :S_DCOM
-        complete(:LIT_STR, @buffer.join)
+      if @next_char == "\""
+        complete(:LIT_STR, @buffer)
         @skip_next = true
       end
     end
@@ -148,15 +171,15 @@ class CharProcessor
   ##############################################################################
   # Process :ESCAPE state
   def process_escape
-    Error.new('No string end was found', @status) if (@cur_type == :S_NL ||
-                                                      @cur_type == :S_CR)
+    Error.new('No string end was found', @status) if (@cur_char == "\n" ||
+                                                      @cur_char == "\r")
     case @cur_char
     when 'n'
-      @buffer.push("\n")
+      @buffer += "\n"
     when 'r'
-      @buffer.push("\r")
+      @buffer += "\r"
     when "\\", "'", "\""
-      @buffer.push(@cur_char)
+      @buffer += @cur_char
     else
       Error.new('Unknown symbol is escaped', @status)
     end
@@ -165,12 +188,23 @@ class CharProcessor
   end
 
   ##############################################################################
-  # Process :COMMENT state
-  def process_comment
-    @state = :COMMENT
+  # Process :SL_COMMENT state
+  def process_single_line_comment
+    @state = :SL_COMMENT
 
-    if @next_type == :S_NL || @next_type == :S_CR
+    if @next_char == "\n" || @next_char == "\r"
       @state = :DEFAULT
+    end
+  end
+
+  ##############################################################################
+  # Process :SL_COMMENT state
+  def process_multi_line_comment
+    @state = :ML_COMMENT
+
+    if @cur_char == "*" && @next_char == "/"
+      @state = :DEFAULT
+      @skip_next = true
     end
   end
 end

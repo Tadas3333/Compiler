@@ -1,17 +1,16 @@
 require_relative '../status'
 require_relative '../error'
 require_relative '../token'
-require_relative 'chartype'
 require_relative 'table'
 require_relative 'charprocessor_states.rb'
 
 class CharProcessor
   attr_accessor :skip_next
 
-  def initialize(tokens)
+  def initialize(tokens, status)
     @tokens = tokens
     @state = :DEFAULT
-    @status = Status.new
+    @status = status
     @skip_next = false
     @table = Table.new
   end
@@ -25,14 +24,13 @@ class CharProcessor
   - :STRING_SCOM
   - :STRING_DCOM
   - :ESCAPE
-  - :COMMENT
+  - :SL_COMMENT
+  - :DL_COMMENT
 =end
 
   def process(cur_char, next_char)
     @cur_char = cur_char
     @next_char = next_char
-    @cur_type = char_type(@cur_char)
-    @next_type = char_type(@next_char)
 
     case @state
     when :DEFAULT; process_default
@@ -42,98 +40,75 @@ class CharProcessor
     when :STRING_SCOM; process_string_scom
     when :STRING_DCOM; process_string_dcom
     when :ESCAPE; process_escape
-    when :COMMENT; process_comment
+    when :SL_COMMENT; process_single_line_comment
+    when :ML_COMMENT; process_multi_line_comment
     else; raise "Unprocessed state #{@state}"
     end
-
-    @status.next_index
   end
 
   def finish(char)
     process(char, :EOF)
-    complete(:EOF)
+    complete(:EOF, nil)
   end
 
   # Process new line symbol
   def process_new_line
     @status.next_line
 
-    @skip_next = true if ((@cur_type == :S_NL && @next_type == :S_CR) ||
-                          (@cur_type == :S_CR && @next_type == :S_NL))
+    @skip_next = true if ((@cur_char == "\n" && @next_char == "\r") ||
+                          (@cur_char == "\r" && @next_char == "\n"))
   end
 
   # Process operator AND
   def process_and
-    if @next_type == :OP_AND
-      complete(:OP_DAND)
+    if @next_char == "&"
+      complete(:OP_DAND, nil)
       @skip_next = true
     else
-      complete(:OP_AND)
+      complete(:OP_AND, nil)
     end
   end
 
   # Process operator OR
   def process_or
-    if @next_type == :OP_OR
-      complete(:OP_DOR)
+    if @next_char == "|"
+      complete(:OP_DOR, nil)
       @skip_next = true
     else
-      complete(:OP_OR)
+      complete(:OP_OR, nil)
     end
   end
 
-  # Process operator GREATER
-  def process_greater
-    if @next_type == :OP_E
-      complete(:OP_GE)
+  # Process relational operator
+  def process_relational(type, type_n_eq)
+    if @next_char == "="
+      complete(type_n_eq, nil)
       @skip_next = true
     else
-      complete(:OP_G)
+      complete(type, nil)
     end
   end
 
-  # Process operator LESS
-  def process_less
-    if @next_type == :OP_E
-      complete(:OP_LE)
-      @skip_next = true
+  # Process minus
+  def process_minus
+    case @next_char
+    when '0'..'9'
+      @state = :LIT_INT
+      @buffer += @cur_char
+    when '.'
+      @state = :LIT_FLOAT
+      @buffer += @cur_char
     else
-      complete(:OP_L)
-    end
-  end
-
-  # Process operator EQUAL
-  def process_equal
-    if @next_type == :OP_E
-      complete(:OP_DE)
-      @skip_next = true
-    else
-      complete(:OP_E)
-    end
-  end
-
-  # Process operator NOT
-  def process_not
-    if @next_type == :OP_E
-      complete(:OP_NE)
-      @skip_next = true
-    else
-      complete(:OP_N)
+      complete(:OP_MINUS, nil)
     end
   end
 
   # Complete token
-  def complete(name, value='')
-    token = Token.new(name, value)
+  def complete(name, value)
+    token = Token.new(name, value, @status.line)
     @tokens.push(token)
     @state = :DEFAULT
 
     @table.show(token, @status)
-  end
-
-  # Get character type
-  def char_type(char)
-    chartype = CharType.new(char, @status)
-    chartype.type
   end
 end

@@ -1,8 +1,5 @@
-635 asd 54.578 33. .34 6375.745 .81 .
->>=!!====+-/\\\*,@$(){}:
-'str 124as 4 +-/\\*,@$"(){}\r\n!. 3.3 .3 3..'
-'\\\"\''
-// comment
-"moo 34a 33" // comment
-"\\\"'\'"
-char float int jei kitjei kitaip testi nutraukti grazinti
+wrt453
+145.9
+-76
+jei // comment
+>>=<<===!!=
