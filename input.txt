@@ -1,19 +1,18 @@
-int a;
-a = ((2 == 4) && (42 || 45 * 3) >= 4) * 4 + 1;
+int apskaiciuoti(int x , int b): (
+  int a;
+  int l = 456;
+  string b = "bbb";
 
-string g = 4;
+  x = 2*2*2;
+  b = 4;
 
-pakolei(a != 6): (
-  a = (a + 2) - 1;
-  jei(a == 5): (
-    nutraukti;
+  pakolei(x > b): (
+    x = x-1;
+
+    jei(x == 5):(
+      nutraukti;
+    )
   )
-)
 
-int apskaiciuoti(int x, int y): (
-  int z;
-  z = 2 + x * y;
-  grazinti z;
+  grazinti x*b;
 )
-
-apskaiciuoti(2, 3);

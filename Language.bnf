@@ -20,7 +20,7 @@
 
 <identifier-and-function-call> ::= <identifier>
 			| <identifier> "(" ")"
-			| <identifier> "(" <call-args> ")"
+			| <identifier> "(" <call-arguments> ")"
 
 <constant> ::= <digits>
             | <digits> "." <digits>
@@ -68,38 +68,21 @@
             | "string"
             | "float"
 <identifier> ::= <digits-and-characters>
-<type-and-ident> ::= <type> <identifier>
-
-
-
 
 	
 			
-			
-<dec-arg> ::= <unary-expression>
-            | <variable-declaration>
-            | <identifier>
-<dec-args> ::= <dec-arg>
-            | <dec-args> "," <dec-arg>
-<funtion-declaration-args-and-block> ::= "(" <dec-args> ")" <statement-region>
-			| "(" ")" <statement-region>
-<variable-function-declaration> ::=	 <type-and-ident> <funtion-declaration-args-and-block>
-			| <type-and-ident> ";"
-			| <type-and-ident> "=" <unary-expression> ";"
-			| <type-and-ident> "=" <string> ";"
+<declaration-statement> ::=	 | <type> <identifier> ";"
+			| <type> <identifier> "=" <unary-expression> ";"
+			| <type> <identifier> "=" <string> ";"
 		
 		
 		
-		
-		
-<call-args> ::= <unary-expression>
+<call-arguments> ::= <unary-expression>
             | <unary-expression> "," <unary-expression>	
-<function-call-args> ::= "(" <call-args> ")" ";"
-			| "(" ")" ";"
-<function-call-variable-assignment> ::= <identifier> <function-call-args>
+<call-and-assignment-statement> ::= <identifier> "(" <call-arguments> ")" ";"
+			| <identifier> "(" ")" ";"
 			| <identifier> "=" <unary-expression> ";"
 			| <identifier> "=" <string> ";"
-			
 			
 			
 
@@ -109,7 +92,6 @@
 			| "grazinti" <unary-expression> ";"
 			
 				
-
 
 <statement-region> ::= ":" "(" <statements> ")"
 					 | ":" "(" ")"
@@ -125,8 +107,24 @@
 <statement> ::= <jei-statement>
             | <pakolei-statement>
 			| <jump-statement>
-			| <function-call-variable-assignment>
-			| <variable-function-declaration>
+			| <call-and-assignment-statement>
+			| <declaration-statement>
 <statements> ::= <statement>
             | <statements> <statement>
-<start> ::= <statements>
+			
+			
+			
+<declaration-argument> ::= <unary-expression>
+			| <type> <identifier>
+			| <identifier>
+<declaration-arguments> ::= <declaration-argument>
+            | <arguments> "," <declaration-argument>
+<function-statement> ::= <type> <identifier> "(" <declaration-arguments> ")" <statement-region>
+			| <type> <identifier> "(" ")" <statement-region>
+<functions> ::= <function-statement>
+			| <functions> <function-statement>
+			
+			
+			
+			
+<start> ::= <functions> EOF

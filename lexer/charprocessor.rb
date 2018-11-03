@@ -7,12 +7,15 @@ require_relative 'charprocessor_states.rb'
 class CharProcessor
   attr_accessor :skip_next
 
-  def initialize(tokens, status)
+  def initialize(tokens, status, show)
     @tokens = tokens
     @state = :DEFAULT
     @status = status
     @skip_next = false
+
+    @show = show
     @table = Table.new
+    @table.table_top if @show == true
   end
 
 =begin
@@ -89,26 +92,12 @@ class CharProcessor
     end
   end
 
-  # Process minus
-  def process_minus
-    case @next_char
-    when '0'..'9'
-      @state = :LIT_INT
-      @buffer += @cur_char
-    when '.'
-      @state = :LIT_FLOAT
-      @buffer += @cur_char
-    else
-      complete(:OP_MINUS, nil)
-    end
-  end
-
   # Complete token
   def complete(name, value)
     token = Token.new(name, value, @status.file_name, @status.line)
     @tokens.push(token)
     @state = :DEFAULT
 
-    @table.show(token, @status)
+    @table.show(token, @status) if @show == true
   end
 end

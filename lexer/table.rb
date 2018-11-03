@@ -4,7 +4,6 @@ require_relative '../status'
 class Table
   def initialize
     @printed_count = 0
-    table_top
   end
 
   def table_top

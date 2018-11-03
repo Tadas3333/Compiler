@@ -17,7 +17,7 @@ class CharProcessor
     when '='; process_relational(:OP_E, :OP_DE)
     when '!'; process_relational(:OP_N, :OP_NE)
     when '+'; complete(:OP_PLUS, nil)
-    when '-'; process_minus
+    when '-'; complete(:OP_MINUS, nil)
     when '*'; complete(:OP_MULTIPLY, nil)
     when ','; complete(:S_COM, nil)
     when ':'; complete(:S_COL, nil)
