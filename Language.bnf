@@ -18,22 +18,21 @@
             | <symbol>
 <all-text-symbols> ::= <text> | <all-text-symbols> <text>
 
+<identifier-and-function-call> ::= <identifier>
+			| <identifier> "(" ")"
+			| <identifier> "(" <call-args> ")"
+
 <constant> ::= <digits>
             | <digits> "." <digits>
             | <digits> "."
             | "." <digits>
-            | <variable-ident>
-
-<unary-symbol> ::= "!"
-			| "-"
-<unary-symbols> ::= <unary-symbol> | <unary-symbols> <unary-symbol>
+			| <identifier-and-function-call>
 
 <string> ::= "'" <all-text-symbols> "'"
             | "\"" <all-text-symbols> "\""
 
 <factor> ::= "(" <unary-expression> ")""
             | <constant>
-			      | <function-call>
 
 <term> ::= <term> "*" <factor>
             | <term> "/" <factor>
@@ -47,7 +46,7 @@
             | <math>
 
 <expression> ::= <relational-exp>
-            | <unary-expression> <logical-symbol> <unary-expression>
+            | <relational-exp> <logical-symbol> <unary-expression>
 
 <unary-expression> ::= <expression>
             | <unary-symbol> <unary-expression>
@@ -60,82 +59,74 @@
 
 <relational-symbol> ::= "=="
             | ">="
-            | "=<"
+            | "<="
             | "!="
             | ">"
             | "<"
 
-<variable-ident> ::= <digits-and-characters>
 <type> ::= "int"
-            | "char"
+            | "string"
             | "float"
-<function-ident> ::= <digits-and-characters>
+<identifier> ::= <digits-and-characters>
+<type-and-ident> ::= <type> <identifier>
 
-<call-arg> ::= <unary-expression>
 
-<call-args> ::= <call-arg>
-            | <call-args> "," <call-arg>
-<function-call-args> ::= "(" <call-args> ")"
 
+
+	
+			
+			
 <dec-arg> ::= <unary-expression>
             | <variable-declaration>
-            | <function-ident>
+            | <identifier>
 <dec-args> ::= <dec-arg>
             | <dec-args> "," <dec-arg>
-<function-dec-args> ::= "(" <dec-args> ")"
+<funtion-declaration-args-and-block> ::= "(" <dec-args> ")" <statement-region>
+			| "(" ")" <statement-region>
+<variable-function-declaration> ::=	 <type-and-ident> <funtion-declaration-args-and-block>
+			| <type-and-ident> ";"
+			| <type-and-ident> "=" <unary-expression> ";"
+			| <type-and-ident> "=" <string> ";"
+		
+		
+		
+		
+		
+<call-args> ::= <unary-expression>
+            | <unary-expression> "," <unary-expression>	
+<function-call-args> ::= "(" <call-args> ")" ";"
+			| "(" ")" ";"
+<function-call-variable-assignment> ::= <identifier> <function-call-args>
+			| <identifier> "=" <unary-expression> ";"
+			| <identifier> "=" <string> ";"
+			
+			
+			
 
-<variable-declaration> ::= <type> <variable-ident>
-			| <type> <variable-ident> "=" <unary-expression>
+<jump-statement> ::= "nutraukti" ";"
+            | "testi" ";"
+			| "grazinti" ";"
+			| "grazinti" <unary-expression> ";"
+			
+				
 
-<function-call> ::= <function-ident> <function-call-args>
-            | <function-ident> "(" ")"
-
-<function-dec> ::= <type> <function-ident> <function-dec-args>
-            | <type> <function-ident> "(" ")"
-
-<variable-assignment> ::= <variable-ident> "=" <unary-expression>
-            | <variable-ident> "=" <string>
-
-<jump-statement> ::= "nutraukti"
-            | "testi"
-            | "grazinti"
-            | "grazinti" <unary-expression>
-
-<input> :: = "gi" ">>" <variable-ident>
-			| "gi" ">>"
-
-<output> :: = "go" "<<" <string>
-			| "go" "<<"
-
-<semicolon-statement> ::= <variable-declaration> ";"
-            | <function-call> ";"
-            | <variable-assignment> ";"
-            | <jump-statement> ";"
-			| <input> ";"
-			| <output> ";"
 
 <statement-region> ::= ":" "(" <statements> ")"
-            | ":" "(" ")"
-<function-statement> ::= <function-dec> <statement-region>
-
+					 | ":" "(" ")"
 <pakolei-statement> ::= "pakolei" "(" <unary-expression> ")" <statement-region>
-
 <kitaip-statement> ::= "kitaip" <statement-region>
-
 <kitaip-jei-statement> ::= "kitaip-jei" "(" <unary-expression> ")" <statement-region>
             | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
             | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
-
 <jei-statement> ::= "jei" "(" <unary-expression> ")" <statement-region>
             | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
             | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
 
 <statement> ::= <jei-statement>
             | <pakolei-statement>
-            | <function-statement>
-            | <semicolon-statement>
-
+			| <jump-statement>
+			| <function-call-variable-assignment>
+			| <variable-function-declaration>
 <statements> ::= <statement>
             | <statements> <statement>
-
 <start> ::= <statements>

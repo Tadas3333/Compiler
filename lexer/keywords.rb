@@ -9,7 +9,7 @@ class Keywords
     when 'kitaip'; return :KW_ELSE
     when 'int'; return :KW_INT
     when 'float'; return :KW_FLOAT
-    when 'char'; return :KW_CHAR
+    when 'string'; return :KW_STRING
     when 'pakolei'; return :KW_WHILE
     when 'nutraukti'; return :KW_BREAK
     when 'testi'; return :KW_CONTINUE

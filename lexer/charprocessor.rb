@@ -53,7 +53,7 @@ class CharProcessor
 
   # Process new line symbol
   def process_new_line
-    @status.next_line
+    @status.line += 1
 
     @skip_next = true if ((@cur_char == "\n" && @next_char == "\r") ||
                           (@cur_char == "\r" && @next_char == "\n"))
@@ -105,7 +105,7 @@ class CharProcessor
 
   # Complete token
   def complete(name, value)
-    token = Token.new(name, value, @status.line)
+    token = Token.new(name, value, @status.file_name, @status.line)
     @tokens.push(token)
     @state = :DEFAULT
 

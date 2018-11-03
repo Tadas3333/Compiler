@@ -1,5 +1,7 @@
 int a;
-a = 0;
+a = ((2 == 4) && (42 || 45 * 3) >= 4) * 4 + 1;
+
+string g = 4;
 
 pakolei(a != 6): (
   a = (a + 2) - 1;
@@ -14,4 +16,4 @@ int apskaiciuoti(int x, int y): (
   grazinti z;
 )
 
-apskaiciuoti(5, 3);
+apskaiciuoti(2, 3);
