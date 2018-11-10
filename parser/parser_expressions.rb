@@ -1,118 +1,162 @@
 class Parser
 =begin
-<unary-expression> ::= {<unary-symbol>} <expression>
-<unary-symbol> ::= "-"
-			| "!"
-=end
-  def parse_unary_expression
-    @indent += 1
-    print_method(__method__.to_s)
-
-    if @cur_token.name == :OP_MINUS
-      next_token
-      parse_unary_expression
-    elsif @cur_token.name == :OP_N
-      next_token
-      parse_unary_expression
-    else
-      parse_expression
-    end
-
-    @indent -= 1
-  end
-
-=begin
-<expression> ::= <relational-exp> {<logical-symbol> <unary-expression>}
+<expression> ::= <operator-and> {"||" <operator-and>}
 =end
   def parse_expression
-    @indent += 1
-    print_method(__method__.to_s)
+    left = parse_operator_and
 
-    parse_relational_exp
-
-    case @cur_token.name
-    when :OP_AND, :OP_DAND
+    while @cur_token.name == :OP_DOR
+      retrn_tkn = @cur_token
       next_token
-      parse_unary_expression
-    when :OP_OR, :OP_DOR
-      next_token
-      parse_unary_expression
+      right = parse_operator_and
+      left = LogicalExpression.new(retrn_tkn.name, left, right)
     end
 
-    @indent -= 1
+    left
   end
 
 =begin
-<relational-exp> ::= <math> {<relational-symbol> <math>}
+<operator-and> ::= <relational> {"&&" <relational>}
 =end
-  def parse_relational_exp
-    @indent += 1
-    print_method(__method__.to_s)
+  def parse_operator_and
+    left = parse_relational
 
-    parse_math
-
-    case @cur_token.name
-    when :OP_DE, :OP_GE, :OP_LE, :OP_NE, :OP_G, :OP_L
+    while @cur_token.name == :OP_DAND
+      retrn_tkn = @cur_token
       next_token
-      parse_relational_exp
+      right = parse_relational
+      left = LogicalExpression.new(retrn_tkn.name, left, right)
     end
 
-    @indent -= 1
+    left
   end
 
 =begin
-<math> ::= <term> {"+"|"-" <term>}
+<relational> ::= <math> {<relational-symbol> <math>}
+=end
+  def parse_relational
+    left = parse_math
+
+    while [:OP_DE, :OP_GE, :OP_LE, :OP_NE, :OP_G, :OP_L].include?(@cur_token.name)
+      retrn_tkn = @cur_token
+      next_token
+      right = parse_math
+      left = RelationalExpression.new(retrn_tkn.name, left, right)
+    end
+
+    left
+  end
+
+=begin
+<math> ::= <term> {"+"<term>, "-" <term>}
 =end
   def parse_math
-    @indent += 1
-    print_method(__method__.to_s)
+    left = parse_term
 
-    parse_term
-
-    case @cur_token.name
-    when :OP_PLUS, :OP_MINUS
+    while [:OP_PLUS, :OP_MINUS].include?(@cur_token.name)
+      retrn_tkn = @cur_token
       next_token
-      parse_math
+      right = parse_term
+      left = ArithmeticExpression.new(retrn_tkn.name, left, right)
     end
 
-    @indent -= 1
+    left
   end
 
 =begin
-<term> ::= <factor> {"*"|"/" <factor>}
+<term> ::= <unary> {"*" <unary>,"/" <unary>}
 =end
   def parse_term
-    @indent += 1
-    print_method(__method__.to_s)
+    left = parse_unary
 
-    parse_factor
-
-    case @cur_token.name
-    when :OP_MULTIPLY, :OP_DIVIDE
+    while [:OP_MULTIPLY, :OP_DIVIDE].include?(@cur_token.name)
+      retrn_tkn = @cur_token
       next_token
-      parse_term
+      right = parse_unary
+      left = ArithmeticExpression.new(retrn_tkn.name, left, right)
     end
 
-    @indent -= 1
+    left
   end
 
 =begin
-<factor> ::= "(" <unary-expression> ")""
-            | <constant>
+<unary> ::= <factor>
+            | {"-","!","+"} <factor>
 =end
-  def parse_factor
-    @indent += 1
-    print_method(__method__.to_s)
+  def parse_unary
+    return parse_factor unless [:OP_MINUS, :OP_N, :OP_PLUS].include?(@cur_token.name)
 
-    if @cur_token.name == :OP_PAREN_O
+    node = nil
+    first_node = nil
+
+    while [:OP_MINUS, :OP_N, :OP_PLUS].include?(@cur_token.name)
+      if node != nil
+        new_node = UnaryExpression.new(@cur_token.name, nil)
+        node.factor = new_node
+        node = new_node
+      else
+        first_node = UnaryExpression.new(@cur_token.name, nil)
+        node = first_node
+      end
       next_token
-      parse_unary_expression
-      expect(:OP_PAREN_C)
-    else
-      parse_constant
     end
 
-    @indent -= 1
+    token_error("No unary expression found!") if node == nil || first_node == nil
+
+    node.factor = parse_factor
+    first_node
+  end
+
+=begin
+<factor> ::= "(" <expression> ")""
+            | <constant>
+            | <identifier>
+            | <function-call>
+            | <string>
+=end
+  def parse_factor
+    case @cur_token.name
+    when :OP_PAREN_O
+      next_token
+      expr = parse_expression
+      expect(:OP_PAREN_C)
+      return BraceExpression.new(expr)
+    when :IDENT
+      if peek == :OP_PAREN_O
+        return parse_function_call
+      else
+        tkn = expect(:IDENT)
+        return VarExpression.new(tkn)
+      end
+    when :LIT_STR
+      tkn = expect(:LIT_STR)
+      return ConstStringExpression.new(tkn)
+    else
+      return parse_constant
+    end
+  end
+
+=begin
+<function-call> ::= <identifier> "(" ")"
+			| <identifier> "(" <arguments> ")"
+<arguments> ::= <expression> {"," <expression>}
+=end
+  def parse_function_call
+    s_ident = expect(:IDENT)
+    expect(:OP_PAREN_O)
+    arguments = []
+
+    if @cur_token.name != :OP_PAREN_C
+      arguments.push(parse_expression)
+    end
+
+    while @cur_token.name != :OP_PAREN_C
+      expect(:S_COM)
+      arguments.push(parse_expression)
+    end
+
+    next_token
+    return CallExpression.new(s_ident, arguments)
   end
 
 =begin
@@ -120,50 +164,19 @@ class Parser
             | <digits> "." <digits>
             | <digits> "."
             | "." <digits>
-			      | <identifier-and-function-call>
 =end
   def parse_constant
-    @indent += 1
-    print_method(__method__.to_s)
-
     case @cur_token.name
-    when :LIT_INT, :LIT_FLOAT
+    when :LIT_INT
+      return_token = @cur_token
       next_token
-    when :IDENT
-      parse_ident_and_function_call
+      return ConstIntExpression.new(return_token)
+    when :LIT_FLOAT
+      return_token = @cur_token
+      next_token
+      return ConstFloatExpression.new(return_token)
     else
       token_error("Unexpected type! Found #{@cur_token.name}")
     end
-
-    @indent -= 1
-  end
-
-=begin
-<identifier-and-function-call> ::= <identifier>
-			| <identifier> "(" ")"
-			| <identifier> "(" <call-arguments> ")"
-=end
-  def parse_ident_and_function_call
-    @indent += 1
-    print_method(__method__.to_s)
-
-    parse_ident
-
-    if @cur_token.name == :OP_PAREN_O
-      next_token
-
-      if @cur_token.name != :OP_PAREN_C
-        parse_unary_expression
-      end
-
-      while @cur_token.name != :OP_PAREN_C
-        expect(:S_COM)
-        parse_unary_expression
-      end
-
-      next_token
-    end
-    
-    @indent -= 1
   end
 end

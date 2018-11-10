@@ -1,60 +1,33 @@
 
 class Parser
 =begin
-<function-statement> ::= <type> <identifier> "(" <declaration-arguments> ")" <statement-region>
+<function-statement> ::= <type> <identifier> "(" <parameters> ")" <statement-region>
 			| <type> <identifier> "(" ")" <statement-region>
-<declaration-arguments> ::= <declaration-argument> {<declaration-argument>}
+<parameters> ::= <type> <identifier> {"," <type> <identifier>}
 =end
   def parse_function_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
-    parse_type
-    parse_ident
+    f_type = parse_type
+    f_ident = expect(:IDENT)
+    params = Parameters.new
 
     expect(:OP_PAREN_O)
 
     if @cur_token.name != :OP_PAREN_C
-      parse_declaration_argument
+      p_type = parse_type
+      p_ident = expect(:IDENT)
+      params.add_parameter(Parameter.new(p_type, p_ident))
     end
 
     while @cur_token.name != :OP_PAREN_C
       expect(:S_COM)
-      parse_declaration_argument
+      p_type = parse_type
+      p_ident = expect(:IDENT)
+      params.add_parameter(Parameter.new(p_type, p_ident))
     end
 
     next_token
-    parse_statement_region
-
-    @indent -= 1
-  end
-
-=begin
-<declaration-argument> ::= <unary-expression>
-            | <type> <identifier>
-            | <identifier>
-=end
-  def parse_declaration_argument
-    @indent += 1
-    print_method(__method__.to_s)
-
-    case @cur_token.name
-    when :IDENT
-      parse_ident
-    when :KW_INT, :KW_FLOAT, :KW_STRING
-      parse_type
-      parse_ident
-
-      if @cur_token.name == :OP_E
-        next_token
-        parse_unary_expression
-      end
-
-    else
-      parse_unary_expression
-    end
-
-    @indent -=1
+    f_statements = parse_statement_region
+    return FunctionDefinition.new(f_ident, params, f_type, f_statements)
   end
 
 =begin
@@ -63,217 +36,185 @@ class Parser
 <statements> ::= <statement> {<statement>}
 =end
   def parse_statement_region
-    @indent += 1
-    print_method(__method__.to_s)
-
     expect(:S_COL)
     expect(:OP_PAREN_O)
 
+    node = StatementsRegion.new
+
     while @cur_token.name != :OP_PAREN_C
-      parse_statement
+      node.add_statement(parse_statement)
     end
 
     next_token
-
-    @indent -=1
+    return node
   end
 
 =begin
 <statement> ::= <jei-statement>
-      | <pakolei-statement>
-			| <jump-statement>
-			| <function-call-variable-assignment>
-			| <variable-function-declaration>
+            | <pakolei-statement>
+      			| <jump-statement>
+      			| <call-statement>
+      			| <assignment-statement>
+      			| <declaration-statement>
 =end
   def parse_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     case @cur_token.name
-    when :KW_IF; parse_if_statement
-    when :KW_WHILE; parse_while_statement
-    when :KW_BREAK, :KW_CONTINUE, :KW_RETURN; parse_jump_statement
-    when :IDENT; parse_call_and_assignment_statement
-    when :KW_INT, :KW_FLOAT, :KW_STRING; parse_declaration_statement
-    else; token_error("Unexpected type! Found #{@cur_token.name}")
-    end
-
-    @indent -= 1
-  end
-
-=begin
-<call-and-assignment-statement> ::= <identifier> "(" <call-arguments> ")" ";"
-			| <identifier> "(" ")" ";"
-			| <identifier> "=" <unary-expression> ";"
-			| <identifier> "=" <string> ";"
-<call-arguments> ::= <unary-expression> {"," <unary-expression>}
-=end
-  def parse_call_and_assignment_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
-    parse_ident
-
-    if @cur_token.name == :OP_E # Variable assignment statement
-      next_token
-
-      if @cur_token.name == :LIT_STR
-        parse_string
+    when :KW_IF
+      return parse_if_statement
+    when :KW_WHILE
+      return parse_while_statement
+    when :KW_BREAK, :KW_CONTINUE, :KW_RETURN
+      return parse_jump_statement
+    when :IDENT
+      if peek == :OP_E
+        return parse_assignment_statement
       else
-        parse_unary_expression
+        return parse_call_statement
       end
-
-      expect(:S_SCOL)
-    else # Function call statement
-      expect(:OP_PAREN_O)
-
-      if @cur_token.name != :OP_PAREN_C
-        parse_unary_expression
-      end
-
-      while @cur_token.name != :OP_PAREN_C
-        expect(:S_COM)
-        parse_unary_expression
-      end
-
-      next_token
-      expect(:S_SCOL)
+    when :KW_INT, :KW_FLOAT, :KW_STRING
+      return parse_declaration_statement
+    else
+      token_error("Unexpected type! Found #{@cur_token.name}")
     end
-
-    @indent -= 1
   end
 
 =begin
-<declaration-statement> ::= <type> <identifier> ";"
-			| <type> <identifier> "=" <unary-expression> ";"
-			| <type> <identifier> "=" <string> ";"
+<call-statement> ::= <function-call> ";"
+=end
+  def parse_call_statement
+    parse_function_call
+    next_token
+    expect(:S_SCOL)
+  end
 
+=begin
+<assignment-statement> ::= <identifier> "=" <expression> ";"
+=end
+  def parse_assignment_statement
+    s_ident = expect(:IDENT)
+    expect(:OP_E)
+    s_exp = parse_expression
+    expect(:S_SCOL)
+    return AssignmentStatement.new(s_ident, s_exp)
+  end
+
+=begin
+<declaration-statement> ::=	 | <type> <identifier> ";"
+			| <type> <identifier> "=" <expression> ";"
 =end
   def parse_declaration_statement
-    @indent += 1
-    print_method(__method__.to_s)
+    v_type = parse_type
+    v_name = expect(:IDENT)
+    v_expr = nil
 
-    parse_type
-    parse_ident
-
-    if @cur_token.name == :OP_E # Variable declaration with assignment stmt
+    if @cur_token.name == :OP_E
       next_token
-
-      if @cur_token.name == :LIT_STR
-        parse_string
-      else
-        parse_unary_expression
-      end
-
+      v_expr = parse_expression
       expect(:S_SCOL)
-    else # Variable declaration statement
+    else
       expect(:S_SCOL)
     end
 
-    @indent -= 1
+    return DeclarationStatement.new(v_type, v_name, v_expr)
   end
 
 =begin
-<jei-statement> ::= "jei" "(" <unary-expression> ")" <statement-region>
-            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
-            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
+<jei-statement> ::= "jei" "(" <expression> ")" <statement-region>
+            | "jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
+            | "jei" "(" <expression> ")" <statement-region> <kitaip-statement>
 =end
   def parse_if_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     expect(:KW_IF)
     expect(:OP_PAREN_O)
-    parse_unary_expression
+    s_expr = parse_expression
     expect(:OP_PAREN_C)
-    parse_statement_region
+    s_statements = parse_statement_region
+
+    s_elseif_statement = nil
+    s_else_statement = nil
 
     case @cur_token.name
-    when :KW_ELSEIF; parse_elseif_statement
-    when :KW_ELSE; parse_else_statement
+    when :KW_ELSEIF; s_elseif_statement = parse_elseif_statement
+    when :KW_ELSE; s_else_statement = parse_else_statement
     end
 
-    @indent -= 1
+    return IfStatement.new(s_expr, s_statements, s_elseif_statement, s_else_statement)
   end
 
 =begin
-<kitaip-jei-statement> ::= "kitaip-jei" "(" <unary-expression> ")" <statement-region>
-            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
-            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
+<kitaip-jei-statement> ::= "kitaip-jei" "(" <expression> ")" <statement-region>
+            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
+            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-statement>
 =end
   def parse_elseif_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     expect(:KW_ELSEIF)
     expect(:OP_PAREN_O)
-    parse_unary_expression
+    s_expr = parse_expression
     expect(:OP_PAREN_C)
-    parse_statement_region
+    s_statements = parse_statement_region
+
+    s_elseif_statement = nil
+    s_else_statement = nil
 
     case @cur_token.name
-    when :KW_ELSEIF; parse_elseif_statement
-    when :KW_ELSE; parse_else_statement
+    when :KW_ELSEIF; s_elseif_statement = parse_elseif_statement
+    when :KW_ELSE; s_else_statement = parse_else_statement
     end
 
-    @indent -= 1
+    return ElseIfStatement.new(s_expr, s_statements, s_elseif_statement, s_else_statement)
   end
 
 =begin
 <kitaip-statement> ::= "kitaip" <statement-region>
 =end
   def parse_else_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     expect(:KW_ELSE)
-    parse_statement_region
+    s_statements = parse_statement_region
 
-    @indent -= 1
+    return ElseStatement.new(s_statements)
   end
 
 =begin
-<pakolei-statement> ::= "pakolei" "(" <unary-expression> ")" <statement-region>
+<pakolei-statement> ::= "pakolei" "(" <expression> ")" <statement-region>
 =end
   def parse_while_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     expect(:KW_WHILE)
     expect(:OP_PAREN_O)
-    parse_unary_expression
+    s_expr = parse_expression
     expect(:OP_PAREN_C)
-    parse_statement_region
+    s_statements = parse_statement_region
 
-    @indent -= 1
+    return WhileStatement.new(s_expr, s_statements)
   end
 
 =begin
 <jump-statement> ::= "nutraukti" ";"
             | "testi" ";"
 			| "grazinti" ";"
-			| "grazinti" <unary-expression> ";"
+			| "grazinti" <expression> ";"
 =end
   def parse_jump_statement
-    @indent += 1
-    print_method(__method__.to_s)
-
     case @cur_token.name
-    when :KW_BREAK, :KW_CONTINUE
-      next_token
+    when :KW_BREAK
+      expect(:KW_BREAK)
       expect(:S_SCOL)
+      return BreakStatement.new
+    when :KW_CONTINUE
+      expect(:KW_CONTINUE)
+      expect(:S_SCOL)
+      return ContinueStatement.new
     when :KW_RETURN
-      next_token
+      expect(:KW_RETURN)
+      s_expr = nil
 
       if @cur_token.name != :S_SCOL
-        parse_unary_expression
+        s_expr = parse_expression
       end
 
       expect(:S_SCOL)
+      return ReturnStatement.new(s_expr)
     else
       token_error("Unexpected type! Found #{@cur_token.name}")
     end
-
-    @indent -= 1
   end
 end

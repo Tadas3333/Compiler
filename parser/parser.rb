@@ -4,7 +4,8 @@ require_relative '../status'
 require_relative '../error'
 require_relative 'parser_statements'
 require_relative 'parser_expressions'
-require_relative 'abstract_syntax_tree'
+require_relative 'ast_statements'
+require_relative 'ast_expressions'
 
 class Parser
   def initialize(tokens)
@@ -17,10 +18,14 @@ class Parser
   # <start> ::= <functions> EOF
   # <functions> ::= <function-statement> {<function-statement>}
   def parse_program
+    node = Program.new
+
     while @cur_token.name != :EOF
-      parse_function_statement
+      node.add_function(parse_function_statement)
     end
+
     puts "Parse success!"
+    node
   end
 
   def expect(name)
@@ -29,7 +34,16 @@ class Parser
       return
     end
 
+    token_to_r = @cur_token
     next_token
+    return token_to_r
+  end
+
+  def peek
+    @index += 1
+    tkn = @tokens[@index]
+    @index -= 1
+    tkn.name
   end
 
   def next_token
@@ -54,30 +68,16 @@ class Parser
 =end
   def parse_type
     case @cur_token.name
-    when :KW_INT;parse_kw_int
-    when :KW_STRING; parse_kw_string
-    when :KW_FLOAT; parse_kw_float
+    when :KW_INT
+      next_token
+      return "Integer"
+    when :KW_STRING
+      next_token
+      return "String"
+    when :KW_FLOAT
+      next_token
+      return "Float"
     else; token_error("Unexpected type! Found #{@cur_token.name}")
     end
-  end
-
-  def parse_ident
-    expect(:IDENT)
-  end
-
-  def parse_kw_string
-    expect(:KW_STRING)
-  end
-
-  def parse_kw_int
-    expect(:KW_INT)
-  end
-
-  def parse_kw_float
-    expect(:KW_FLOAT)
-  end
-
-  def parse_string
-    expect(:LIT_STR)
   end
 end

@@ -18,44 +18,45 @@
             | <symbol>
 <all-text-symbols> ::= <text> | <all-text-symbols> <text>
 
-<identifier-and-function-call> ::= <identifier>
-			| <identifier> "(" ")"
-			| <identifier> "(" <call-arguments> ")"
 
 <constant> ::= <digits>
             | <digits> "." <digits>
             | <digits> "."
             | "." <digits>
-			| <identifier-and-function-call>
 
 <string> ::= "'" <all-text-symbols> "'"
             | "\"" <all-text-symbols> "\""
-
-<factor> ::= "(" <unary-expression> ")""
+			
+<factor> ::= "(" <expression> ")""
             | <constant>
+			| <identifier>
+			| <function-call>
+			| <string>
+			
+<unary> ::= <factor>
+			| <unary-symbols> <factor>
 
-<term> ::= <term> "*" <factor>
-            | <term> "/" <factor>
-            | <factor>
+<term> ::= <term> "*" <unary>
+            | <term> "/" <unary>
+            | <unary>
 
 <math> ::= <math> "+" <term>
             | <math> "-" <term>
             | <term>
 
-<relational-exp> ::= <math> <relational-symbol> <math>
+<relational> ::= <math> <relational-symbol> <math>
             | <math>
+			
+<operator-and> ::= <relational>
+			| <operator-and> "&&" <relational>
 
-<expression> ::= <relational-exp>
-            | <relational-exp> <logical-symbol> <unary-expression>
-
-<unary-expression> ::= <expression>
-            | <unary-symbol> <unary-expression>
+<expression> ::= <operator-and>
+            | <expression> "||" <operator-and>
 
 <unary-symbol> ::= "-"
 			| "!"
-			
-<logical-symbol> ::= "&&"
-            | "||"
+<unary-symbols> ::= <unary-symbol>
+			| <unary-symbols> <unary-symbol>
 
 <relational-symbol> ::= "=="
             | ">="
@@ -72,54 +73,45 @@
 	
 			
 <declaration-statement> ::=	 | <type> <identifier> ";"
-			| <type> <identifier> "=" <unary-expression> ";"
-			| <type> <identifier> "=" <string> ";"
-		
-		
-		
-<call-arguments> ::= <unary-expression>
-            | <unary-expression> "," <unary-expression>	
-<call-and-assignment-statement> ::= <identifier> "(" <call-arguments> ")" ";"
-			| <identifier> "(" ")" ";"
-			| <identifier> "=" <unary-expression> ";"
-			| <identifier> "=" <string> ";"
-			
-			
-
+			| <type> <identifier> "=" <expression> ";"
+<arguments> ::= <expression>
+	| <arguments> "," <expression>	
+<function-call> ::= <identifier> "(" ")"
+			| <identifier> "(" <arguments> ")"
+<call-statement> ::= <function-call> ";"
+<assignment-statement> ::= <identifier> "=" <expression> ";"	
 <jump-statement> ::= "nutraukti" ";"
             | "testi" ";"
 			| "grazinti" ";"
-			| "grazinti" <unary-expression> ";"
+			| "grazinti" <expression> ";"
 			
 				
 
 <statement-region> ::= ":" "(" <statements> ")"
 					 | ":" "(" ")"
-<pakolei-statement> ::= "pakolei" "(" <unary-expression> ")" <statement-region>
+<pakolei-statement> ::= "pakolei" "(" <expression> ")" <statement-region>
 <kitaip-statement> ::= "kitaip" <statement-region>
-<kitaip-jei-statement> ::= "kitaip-jei" "(" <unary-expression> ")" <statement-region>
-            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
-            | "kitaip-jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
-<jei-statement> ::= "jei" "(" <unary-expression> ")" <statement-region>
-            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-jei-statement>
-            | "jei" "(" <unary-expression> ")" <statement-region> <kitaip-statement>
+<kitaip-jei-statement> ::= "kitaip-jei" "(" <expression> ")" <statement-region>
+            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
+            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-statement>
+<jei-statement> ::= "jei" "(" <expression> ")" <statement-region>
+            | "jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
+            | "jei" "(" <expression> ")" <statement-region> <kitaip-statement>
 
 <statement> ::= <jei-statement>
             | <pakolei-statement>
 			| <jump-statement>
-			| <call-and-assignment-statement>
+			| <call-statement>
+			| <assignment-statement>
 			| <declaration-statement>
 <statements> ::= <statement>
             | <statements> <statement>
 			
 			
 			
-<declaration-argument> ::= <unary-expression>
-			| <type> <identifier>
-			| <identifier>
-<declaration-arguments> ::= <declaration-argument>
-            | <arguments> "," <declaration-argument>
-<function-statement> ::= <type> <identifier> "(" <declaration-arguments> ")" <statement-region>
+<parameters> ::= <type> <identifier>
+            | <parameters> "," <type> <identifier>
+<function-statement> ::= <type> <identifier> "(" <parameters> ")" <statement-region>
 			| <type> <identifier> "(" ")" <statement-region>
 <functions> ::= <function-statement>
 			| <functions> <function-statement>
