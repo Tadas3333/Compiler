@@ -5,6 +5,12 @@ class Node
   end
 end
 
+class Statement < Node
+end
+
+class Definition < Node
+end
+
 class Program < Node
   def initialize
     @functions = []
@@ -19,8 +25,7 @@ class Program < Node
   end
 end
 
-
-class FunctionDefinition < Node
+class FunctionDefinition < Definition
   def initialize(name, params, ret_type, body)
     @name = name
     @params = params
@@ -62,7 +67,7 @@ class Parameter < Node
   end
 end
 
-class StatementsRegion < Node
+class StatementsRegion < Statement
   def initialize
     @statements = []
   end
@@ -76,7 +81,7 @@ class StatementsRegion < Node
   end
 end
 
-class AssignmentStatement < Node
+class AssignmentStatement < Statement
   def initialize(name, value)
     @name = name
     @value = value
@@ -88,7 +93,7 @@ class AssignmentStatement < Node
   end
 end
 
-class DeclarationStatement < Node
+class DeclarationStatement < Statement
   def initialize(type, name, value)
     @type = type
     @name = name
@@ -102,49 +107,23 @@ class DeclarationStatement < Node
   end
 end
 
-class IfStatement < Node
-  def initialize(expr, statements, elseif_statement, else_statement)
+class IfStatement < Statement
+  def initialize(expr, statements, elseif_statements, else_statement)
     @expr = expr
     @statements = statements
-    @elseif_statement = elseif_statement
+    @elseif_statements = elseif_statements
     @else_statement = else_statement
   end
 
   def print(p)
     p.print('expr', @expr)
     p.print('statements', @statements)
-    p.print('elseif', @elseif_statement) if @elseif_statement != nil
+    p.print('elseif', @elseif_statements) if @elseif_statements != []
     p.print('else', @else_statement)  if @else_statement != nil
   end
 end
 
-class ElseIfStatement < Node
-  def initialize(expr, statements, elseif_statement, else_statement)
-    @expr = expr
-    @statements = statements
-    @elseif_statement = elseif_statement
-    @else_statement = else_statement
-  end
-
-  def print(p)
-    p.print('expr', @expr)
-    p.print('statements', @statements)
-    p.print('elseif', @elseif_statement) if @elseif_statement != nil
-    p.print('else', @else_statement)  if @else_statement != nil
-  end
-end
-
-class ElseStatement < Node
-  def initialize(statements)
-    @statements = statements
-  end
-
-  def print(p)
-    p.print 'statements', @statements
-  end
-end
-
-class WhileStatement < Node
+class ElseIfStatement < Statement
   def initialize(expr, statements)
     @expr = expr
     @statements = statements
@@ -156,24 +135,49 @@ class WhileStatement < Node
   end
 end
 
-class BreakStatement < Node
-  def initialize
+class ElseStatement < Statement
+  def initialize(statements)
+    @statements = statements
+  end
+
+  def print(p)
+    p.print 'statements', @statements
+  end
+end
+
+class WhileStatement < Statement
+  def initialize(expr, statements)
+    @expr = expr
+    @statements = statements
+  end
+
+  def print(p)
+    p.print 'expr', @expr
+    p.print 'statements', @statements
+  end
+end
+
+class BreakStatement < Statement
+  def initialize(token)
+    @token = token
   end
 
   def print(p)
   end
 end
 
-class ContinueStatement < Node
-  def initialize
+class ContinueStatement < Statement
+  def initialize(token)
+    @token = token
   end
 
   def print(p)
   end
 end
 
-class ReturnStatement < Node
-  def initialize(expr)
+class ReturnStatement < Statement
+  def initialize(token, expr)
+    @token = token
     @expr = expr
   end
 

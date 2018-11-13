@@ -41,8 +41,6 @@ class AstPrinter
     when 'ConstIntExpression', 'ConstFloatExpression', 'ConstStringExpression',
          'VarExpression'
       print_line('%s: %s: %s' % [field_name, node.class, node.tkn.value])
-    when 'ArithmeticExpression', 'UnaryExpression'
-      print_line('%s: %s(%s):' % [field_name, node.class, node.operator])
     else
       print_line('%s: %s:' % [field_name, node.class])
     end

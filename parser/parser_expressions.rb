@@ -9,7 +9,7 @@ class Parser
       retrn_tkn = @cur_token
       next_token
       right = parse_operator_and
-      left = LogicalExpression.new(retrn_tkn.name, left, right)
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
     end
 
     left
@@ -25,7 +25,7 @@ class Parser
       retrn_tkn = @cur_token
       next_token
       right = parse_relational
-      left = LogicalExpression.new(retrn_tkn.name, left, right)
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
     end
 
     left
@@ -41,7 +41,7 @@ class Parser
       retrn_tkn = @cur_token
       next_token
       right = parse_math
-      left = RelationalExpression.new(retrn_tkn.name, left, right)
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
     end
 
     left
@@ -57,7 +57,7 @@ class Parser
       retrn_tkn = @cur_token
       next_token
       right = parse_term
-      left = ArithmeticExpression.new(retrn_tkn.name, left, right)
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
     end
 
     left
@@ -73,7 +73,7 @@ class Parser
       retrn_tkn = @cur_token
       next_token
       right = parse_unary
-      left = ArithmeticExpression.new(retrn_tkn.name, left, right)
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
     end
 
     left
@@ -86,25 +86,9 @@ class Parser
   def parse_unary
     return parse_factor unless [:OP_MINUS, :OP_N, :OP_PLUS].include?(@cur_token.name)
 
-    node = nil
-    first_node = nil
-
-    while [:OP_MINUS, :OP_N, :OP_PLUS].include?(@cur_token.name)
-      if node != nil
-        new_node = UnaryExpression.new(@cur_token.name, nil)
-        node.factor = new_node
-        node = new_node
-      else
-        first_node = UnaryExpression.new(@cur_token.name, nil)
-        node = first_node
-      end
-      next_token
-    end
-
-    token_error("No unary expression found!") if node == nil || first_node == nil
-
-    node.factor = parse_factor
-    first_node
+    oper = @cur_token.name
+    next_token
+    return UnaryExpression.new(oper, parse_unary)
   end
 
 =begin
@@ -120,7 +104,7 @@ class Parser
       next_token
       expr = parse_expression
       expect(:OP_PAREN_C)
-      return BraceExpression.new(expr)
+      return expr
     when :IDENT
       if peek == :OP_PAREN_O
         return parse_function_call

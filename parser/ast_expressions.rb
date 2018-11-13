@@ -1,34 +1,9 @@
 require_relative 'ast_statements'
 
-class LogicalExpression < Node
-  def initialize(operator, left, right)
-    @operator = operator
-    @left = left
-    @right = right
-  end
-
-  def print(p)
-    p.print 'operator', @operator
-    p.print 'left', @left
-    p.print 'right', @right
-  end
+class Expression < Node
 end
 
-class RelationalExpression < Node
-  def initialize(operator, left, right)
-    @operator = operator
-    @left = left
-    @right = right
-  end
-
-  def print(p)
-    p.print 'operator', @operator
-    p.print 'left', @left
-    p.print 'right', @right
-  end
-end
-
-class ArithmeticExpression < Node
+class BinaryExpression < Expression
   attr_reader :operator
 
   def initialize(operator, left, right)
@@ -38,12 +13,13 @@ class ArithmeticExpression < Node
   end
 
   def print(p)
+    p.print 'op', @operator
     p.print 'left', @left
     p.print 'right', @right
   end
 end
 
-class UnaryExpression < Node
+class UnaryExpression < Expression
   attr_reader :operator
   attr_accessor :factor
 
@@ -53,21 +29,12 @@ class UnaryExpression < Node
   end
 
   def print(p)
+    p.print 'op', @operator
     p.print 'factor', @factor
   end
 end
 
-class BraceExpression < Node
-  def initialize(expr)
-    @expr = expr
-  end
-
-  def print(p)
-    p.print 'expr', @expr
-  end
-end
-
-class VarExpression < Node
+class VarExpression < Expression
   def initialize(token)
     @tkn = token
   end
@@ -77,7 +44,7 @@ class VarExpression < Node
   end
 end
 
-class CallExpression < Node
+class CallExpression < Expression
   def initialize(name, arguments)
     @name = name
     @arguments = arguments
@@ -89,7 +56,7 @@ class CallExpression < Node
   end
 end
 
-class ConstIntExpression < Node
+class ConstIntExpression < Expression
   attr_reader :tkn
 
   def initialize(token)
@@ -100,7 +67,7 @@ class ConstIntExpression < Node
   end
 end
 
-class ConstStringExpression < Node
+class ConstStringExpression < Expression
   attr_reader :tkn
 
   def initialize(token)
@@ -111,7 +78,7 @@ class ConstStringExpression < Node
   end
 end
 
-class ConstFloatExpression < Node
+class ConstFloatExpression < Expression
   attr_reader :tkn
 
   def initialize(token)
@@ -122,7 +89,7 @@ class ConstFloatExpression < Node
   end
 end
 
-class VarExpression < Node
+class VarExpression < Expression
   attr_reader :tkn
 
   def initialize(token)

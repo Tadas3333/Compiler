@@ -130,15 +130,19 @@ class Parser
     expect(:OP_PAREN_C)
     s_statements = parse_statement_region
 
-    s_elseif_statement = nil
-    s_else_statement = nil
+    elseif_statements = []
 
-    case @cur_token.name
-    when :KW_ELSEIF; s_elseif_statement = parse_elseif_statement
-    when :KW_ELSE; s_else_statement = parse_else_statement
+    while @cur_token.name == :KW_ELSEIF
+      elseif_statements.push(parse_elseif_statement)
     end
 
-    return IfStatement.new(s_expr, s_statements, s_elseif_statement, s_else_statement)
+    else_statement = nil
+
+    if @cur_token.name == :KW_ELSE
+      else_statement = parse_else_statement
+    end
+
+    return IfStatement.new(s_expr, s_statements, elseif_statements, else_statement)
   end
 
 =begin
@@ -153,15 +157,7 @@ class Parser
     expect(:OP_PAREN_C)
     s_statements = parse_statement_region
 
-    s_elseif_statement = nil
-    s_else_statement = nil
-
-    case @cur_token.name
-    when :KW_ELSEIF; s_elseif_statement = parse_elseif_statement
-    when :KW_ELSE; s_else_statement = parse_else_statement
-    end
-
-    return ElseIfStatement.new(s_expr, s_statements, s_elseif_statement, s_else_statement)
+    return ElseIfStatement.new(s_expr, s_statements)
   end
 
 =begin
@@ -196,15 +192,15 @@ class Parser
   def parse_jump_statement
     case @cur_token.name
     when :KW_BREAK
-      expect(:KW_BREAK)
+      token = expect(:KW_BREAK)
       expect(:S_SCOL)
-      return BreakStatement.new
+      return BreakStatement.new(token)
     when :KW_CONTINUE
-      expect(:KW_CONTINUE)
+      token = expect(:KW_CONTINUE)
       expect(:S_SCOL)
-      return ContinueStatement.new
+      return ContinueStatement.new(token)
     when :KW_RETURN
-      expect(:KW_RETURN)
+      token = expect(:KW_RETURN)
       s_expr = nil
 
       if @cur_token.name != :S_SCOL
@@ -212,7 +208,7 @@ class Parser
       end
 
       expect(:S_SCOL)
-      return ReturnStatement.new(s_expr)
+      return ReturnStatement.new(token, s_expr)
     else
       token_error("Unexpected type! Found #{@cur_token.name}")
     end
