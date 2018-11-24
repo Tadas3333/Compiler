@@ -3,11 +3,11 @@ int apskaiciuoti(int x , int b): (
   int l = 456;
   string b = "bbb";
 
-  x = 2*2*2;
+  x = x + 2 + 5/2 - 3 * 3;
   b = 4;
 
   pakolei(x > b): (
-    x = !x - 1;
+    x = !-!!x - 1;
 
     jei(x == 5):(
       nutraukti;

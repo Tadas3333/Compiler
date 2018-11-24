@@ -108,22 +108,18 @@ class DeclarationStatement < Statement
 end
 
 class IfStatement < Statement
-  def initialize(expr, statements, elseif_statements, else_statement)
-    @expr = expr
-    @statements = statements
-    @elseif_statements = elseif_statements
+  def initialize(branches, else_statement)
+    @branches = branches
     @else_statement = else_statement
   end
 
   def print(p)
-    p.print('expr', @expr)
-    p.print('statements', @statements)
-    p.print('elseif', @elseif_statements) if @elseif_statements != []
+    p.print('branch', @branches)
     p.print('else', @else_statement)  if @else_statement != nil
   end
 end
 
-class ElseIfStatement < Statement
+class Branch < Node
   def initialize(expr, statements)
     @expr = expr
     @statements = statements

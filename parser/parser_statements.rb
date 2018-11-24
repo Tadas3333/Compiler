@@ -124,16 +124,17 @@ class Parser
             | "jei" "(" <expression> ")" <statement-region> <kitaip-statement>
 =end
   def parse_if_statement
+    branches = []
     expect(:KW_IF)
     expect(:OP_PAREN_O)
     s_expr = parse_expression
     expect(:OP_PAREN_C)
     s_statements = parse_statement_region
 
-    elseif_statements = []
+    branches.push(Branch.new(s_expr, s_statements));
 
     while @cur_token.name == :KW_ELSEIF
-      elseif_statements.push(parse_elseif_statement)
+      branches.push(parse_elseif_statement)
     end
 
     else_statement = nil
@@ -142,7 +143,7 @@ class Parser
       else_statement = parse_else_statement
     end
 
-    return IfStatement.new(s_expr, s_statements, elseif_statements, else_statement)
+    return IfStatement.new(branches, else_statement)
   end
 
 =begin
@@ -157,7 +158,7 @@ class Parser
     expect(:OP_PAREN_C)
     s_statements = parse_statement_region
 
-    return ElseIfStatement.new(s_expr, s_statements)
+    return Branch.new(s_expr, s_statements)
   end
 
 =begin
