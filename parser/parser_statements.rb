@@ -82,9 +82,9 @@ class Parser
 <call-statement> ::= <function-call> ";"
 =end
   def parse_call_statement
-    parse_function_call
-    next_token
+    c_expr = parse_function_call
     expect(:S_SCOL)
+    return c_expr
   end
 
 =begin

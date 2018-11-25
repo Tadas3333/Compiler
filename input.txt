@@ -1,11 +1,8 @@
-int apskaiciuoti(int x , int b): (
-  x = b;
-  jei(x == b): (
-    int a = 4;
-    a = 1;
-  )
-)
 
 int asg(int a, int b): (
   a = b;
+)
+
+int apskaiciuoti(int x , int b): (
+  x = asg(0, b);
 )
