@@ -1,24 +1,11 @@
 int apskaiciuoti(int x , int b): (
-  int a;
-  int l = 456;
-  string b = "bbb";
-
-  x = x + 2 + 5/2 - 3 * 3;
-  b = 4;
-
-  pakolei(x > b): (
-    x = !-!!x - 1;
-
-    jei(x == 5):(
-      nutraukti;
-    )
-    kitjei(x == 3):(
-    )
-    kitjei(x == 2):(
-    )
-    kitaip :(
-    )
+  x = b;
+  jei(x == b): (
+    int a = 4;
+    a = 1;
   )
+)
 
-  grazinti foo(10) < 20;
+int asg(int a, int b): (
+  a = b;
 )

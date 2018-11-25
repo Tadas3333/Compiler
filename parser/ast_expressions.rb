@@ -34,16 +34,6 @@ class UnaryExpression < Expression
   end
 end
 
-class VarExpression < Expression
-  def initialize(token)
-    @tkn = token
-  end
-
-  def print(p)
-    p.print 'var', @tkn
-  end
-end
-
 class CallExpression < Expression
   def initialize(name, arguments)
     @name = name

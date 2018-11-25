@@ -1,7 +1,7 @@
 
 class Node
   def print(p)
-    raise 'not implemented for clas %s' % [self.class]
+    raise 'not implemented for class %s' % [self.class]
   end
 end
 
@@ -26,6 +26,8 @@ class Program < Node
 end
 
 class FunctionDefinition < Definition
+  attr_reader :name
+
   def initialize(name, params, ret_type, body)
     @name = name
     @params = params
