@@ -35,6 +35,9 @@ class UnaryExpression < Expression
 end
 
 class CallExpression < Expression
+  attr_reader :name
+  attr_reader :arguments
+
   def initialize(name, arguments)
     @name = name
     @arguments = arguments

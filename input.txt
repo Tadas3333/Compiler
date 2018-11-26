@@ -1,8 +1,15 @@
 
-int asg(int a, int b): (
+float asg(float a, float b): (
   a = b;
 )
 
-int apskaiciuoti(int x , int b): (
-  x = asg(0, b);
+int apskaiciuoti(float x , float b): (
+  string a = "a" + "b";
+  x = asg(0.0, b);
+  jei(0): (
+    nutraukti;
+  )
+  pakolei(0): (
+
+  )
 )

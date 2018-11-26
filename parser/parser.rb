@@ -70,13 +70,13 @@ class Parser
     case @cur_token.name
     when :KW_INT
       next_token
-      return "Integer"
+      return :LIT_INT
     when :KW_STRING
       next_token
-      return "String"
+      return :LIT_STR
     when :KW_FLOAT
       next_token
-      return "Float"
+      return :LIT_FLOAT
     else; token_error("Unexpected type! Found #{@cur_token.name}")
     end
   end

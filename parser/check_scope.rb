@@ -22,162 +22,161 @@ class Scope
     return @parent.declared?(name) unless @parent.equal?(nil)
     false
   end
-
-  def undeclared_var(name)
-    Error.new("undeclared variable #{name.value}", Status.new(name.file_name, name.line))
-  end
 end
 
+def undeclared_var(name)
+  Error.new("undeclared variable #{name.value}", Status.new(name.file_name, name.line))
+end
 
 class Node
-  def check(name)
-    raise 'check not implemented for class %s' % [self.class]
+  def check_scope(name)
+    raise 'check_scope not implemented for class %s' % [self.class]
   end
 end
 
 class Program < Node
-  def check
+  def check_scope
     scope = Scope.new(nil)
 
     @functions.each {|func|
-      scope.add(func.name)
-      func.check(scope)
+      func.check_scope(scope)
     }
   end
 end
 
 class FunctionDefinition < Definition
-  def check(parent)
+  def check_scope(parent)
+    parent.add(@name)
     scope = Scope.new(parent)
-    @params.check(scope)
-    @body.check(scope)
+    @params.check_scope(scope)
+    @body.check_scope(scope)
   end
 end
 
 class Parameters < Node
-  def check(parent)
+  def check_scope(parent)
     @params.each{ |param|
-      param.check(parent)
+      param.check_scope(parent)
     }
   end
 end
 
 class Parameter < Node
-  def check(parent)
+  def check_scope(parent)
     parent.add(@name)
   end
 end
 
 class StatementsRegion < Statement
-  def check(parent)
+  def check_scope(parent)
     scope = Scope.new(parent)
 
     @statements.each{ |statement|
-      statement.check(scope)
+      statement.check_scope(scope)
     }
   end
 end
 
 class AssignmentStatement < Statement
-  def check(parent)
-    parent.undeclared_var(@name) unless parent.declared?(@name)
-    @value.check(parent)
+  def check_scope(parent)
+    undeclared_var(@name) unless parent.declared?(@name)
+    @value.check_scope(parent)
   end
 end
 
 class DeclarationStatement < Statement
-  def check(parent)
+  def check_scope(parent)
     parent.add(@name)
-    @value.check(parent)
+    @value.check_scope(parent)
   end
 end
 
 class IfStatement < Statement
-  def check(parent)
+  def check_scope(parent)
     @branches.each{ |branch|
-      branch.check(parent)
+      branch.check_scope(parent)
     }
 
-    @else_statement.check(parent) if @else_statement != nil
+    @else_statement.check_scope(parent) if @else_statement != nil
   end
 end
 
 class Branch < Node
-  def check(parent)
-    @expr.check(parent)
-    @statements.check(parent)
+  def check_scope(parent)
+    @expr.check_scope(parent)
+    @statements.check_scope(parent)
   end
 end
 
 class ElseStatement < Statement
-  def check(parent)
-    @statements.check(parent)
+  def check_scope(parent)
+    @statements.check_scope(parent)
   end
 end
 
 class WhileStatement < Statement
-  def check(parent)
-    @expr.check(parent)
-    @statements.check(parent)
+  def check_scope(parent)
+    @expr.check_scope(parent)
+    @statements.check_scope(parent)
   end
 end
 
 class BreakStatement < Statement
-  def check(parent)
+  def check_scope(parent)
   end
 end
 
 class ContinueStatement < Statement
-  def check(parent)
+  def check_scope(parent)
   end
 end
 
 class ReturnStatement < Statement
-  def check(parent)
-    @expr.check(parent) if @expr != nil
+  def check_scope(parent)
+    @expr.check_scope(parent) if @expr != nil
   end
 end
 
 class BinaryExpression < Expression
-  def check(parent)
-    @left.check(parent)
-    @right.check(parent)
+  def check_scope(parent)
+    @left.check_scope(parent)
+    @right.check_scope(parent)
   end
 end
 
 class UnaryExpression < Expression
-  def check(parent)
-    @factor.check(parent)
+  def check_scope(parent)
+    @factor.check_scope(parent)
   end
 end
 
 class CallExpression < Expression
-  def check(parent)
-    parent.undeclared_var(@name) unless parent.declared?(@name)
+  def check_scope(parent)
+    undeclared_var(@name) unless parent.declared?(@name)
 
     @arguments.each{ |arg|
-      arg.check(parent)
+      arg.check_scope(parent)
     }
   end
 end
 
 class ConstIntExpression < Expression
-  def check(parent)
+  def check_scope(parent)
   end
 end
 
 class ConstStringExpression < Expression
-  def check(parent)
+  def check_scope(parent)
   end
 end
 
 class ConstFloatExpression < Expression
-  def check(parent)
+  def check_scope(parent)
   end
 end
 
 class VarExpression < Expression
-  def check(parent)
-    parent.undeclared_var(@tkn) unless parent.declared?(@tkn)
+  def check_scope(parent)
+    undeclared_var(@tkn) unless parent.declared?(@tkn)
   end
 end

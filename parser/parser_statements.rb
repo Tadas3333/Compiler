@@ -15,14 +15,28 @@ class Parser
     if @cur_token.name != :OP_PAREN_C
       p_type = parse_type
       p_ident = expect(:IDENT)
-      params.add_parameter(Parameter.new(p_type, p_ident))
+      p_value = nil
+
+      if @cur_token.name == :OP_E
+        next_token
+        p_value = parse_expression
+      end
+
+      params.add_parameter(Parameter.new(p_type, p_ident, p_value))
     end
 
     while @cur_token.name != :OP_PAREN_C
       expect(:S_COM)
       p_type = parse_type
       p_ident = expect(:IDENT)
-      params.add_parameter(Parameter.new(p_type, p_ident))
+      p_value = nil
+
+      if @cur_token.name == :OP_E
+        next_token
+        p_value = parse_expression
+      end
+
+      params.add_parameter(Parameter.new(p_type, p_ident, p_value))
     end
 
     next_token

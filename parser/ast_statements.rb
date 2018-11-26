@@ -27,12 +27,16 @@ end
 
 class FunctionDefinition < Definition
   attr_reader :name
+  attr_reader :ret_type
+  attr_reader :params
+  attr_reader :variables
 
   def initialize(name, params, ret_type, body)
     @name = name
     @params = params
     @ret_type = ret_type
     @body = body
+    @variables = []
   end
 
   def print(p)
@@ -44,6 +48,8 @@ class FunctionDefinition < Definition
 end
 
 class Parameters < Node
+  attr_reader :params
+
   def initialize
     @params = []
   end
@@ -58,14 +64,19 @@ class Parameters < Node
 end
 
 class Parameter < Node
-  def initialize(type, name)
+  attr_reader :type
+  attr_reader :name
+
+  def initialize(type, name, value)
     @type = type
     @name = name
+    @value = value
   end
 
   def print(p)
-    p.print 'name', @name
-    p.print 'type', @type
+    p.print('name', @name)
+    p.print('type', @type)
+    p.print('value', @value) if @value != nil
   end
 end
 
@@ -96,6 +107,9 @@ class AssignmentStatement < Statement
 end
 
 class DeclarationStatement < Statement
+  attr_reader :type
+  attr_reader :name
+
   def initialize(type, name, value)
     @type = type
     @name = name
