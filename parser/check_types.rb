@@ -13,9 +13,12 @@ class Variable
   end
 end
 
-class FuncAndVar
+class TypesCheck
+  attr_reader :error
+
   def initialize
     @funcs = []
+    @error = false
   end
 
   def add_function(node)
@@ -59,7 +62,8 @@ class FuncAndVar
 
   def function_params_match?(func, call)
     if func.params.params.size != call.arguments.size
-      Error.new("#{call.name.value} parameters count does not match", Status.new(call.name.file_name, call.name.line))
+      NoExitError.new("#{call.name.value} parameters count does not match", Status.new(call.name.file_name, call.name.line))
+      @error = true
     end
 
     indx = 0
@@ -69,11 +73,16 @@ class FuncAndVar
       indx += 1
     }
   end
-end
 
-def types_match?(type1, type2, lc_token)
-  return Error.new("#{type1} and #{type2} types do no match", Status.new(lc_token.file_name, lc_token.line)) if type1 != type2
-  true
+  def types_match?(type1, type2, lc_token)
+    if type1 != type2
+      NoExitError.new("type mismatch", Status.new(lc_token.file_name, lc_token.line))
+      @error = true
+      return false
+    end
+
+    true
+  end
 end
 
 class Node
@@ -84,11 +93,15 @@ end
 
 class Program < Node
   def check_types
-    fna = FuncAndVar.new
+    fna = TypesCheck.new
 
     @functions.each {|func|
       func.check_types(fna)
     }
+
+    if fna.error
+      exit
+    end
   end
 end
 
@@ -113,7 +126,7 @@ class Parameter < Node
     fna.add_variable(self)
     return if @value == nil
     @value.check_types(fna)
-    types_match?(@type, @value.get_expr_type(fna).name, @name)
+    fna.types_match?(@type, @value.get_expr_type(fna).name, @name)
   end
 end
 
@@ -128,7 +141,7 @@ end
 class AssignmentStatement < Statement
   def check_types(fna)
     @value.check_types(fna)
-    types_match?(fna.get_var_type(@name).name, @value.get_expr_type(fna).name, @name)
+    fna.types_match?(fna.get_var_type(@name).name, @value.get_expr_type(fna).name, @name)
   end
 end
 
@@ -137,7 +150,7 @@ class DeclarationStatement < Statement
     fna.add_variable(self)
     return if @value == nil
     @value.check_types(fna)
-    types_match?(@type, @value.get_expr_type(fna).name, @name)
+    fna.types_match?(@type, @value.get_expr_type(fna).name, @name)
   end
 end
 
@@ -155,7 +168,7 @@ class Branch < Node
   def check_types(fna)
     @expr.check_types(fna)
     type_tkn = @expr.get_expr_type(fna)
-    types_match?(type_tkn.name, :LIT_INT, type_tkn)
+    fna.types_match?(type_tkn.name, :LIT_INT, type_tkn)
     @statements.check_types(fna)
   end
 end
@@ -170,7 +183,7 @@ class WhileStatement < Statement
   def check_types(fna)
     @expr.check_types(fna)
     type_tkn = @expr.get_expr_type(fna)
-    types_match?(type_tkn.name, :LIT_INT, type_tkn)
+    fna.types_match?(type_tkn.name, :LIT_INT, type_tkn)
     @statements.check_types(fna)
   end
 end
@@ -193,7 +206,7 @@ class ReturnStatement < Statement
       ret_type = @expr.get_expr_type(fna).name
     end
 
-    types_match?(ret_type, fna.get_current_function_type, @token)
+    fna.types_match?(ret_type, fna.get_current_function_type, @token)
   end
 end
 
@@ -202,7 +215,7 @@ class BinaryExpression < Expression
     @left.check_types(fna)
     @right.check_types(fna)
     left_tkn = @left.get_expr_type(fna)
-    types_match?(left_tkn.name, @right.get_expr_type(fna).name, left_tkn)
+    fna.types_match?(left_tkn.name, @right.get_expr_type(fna).name, left_tkn)
   end
 
   def get_expr_type(fna)

@@ -4,7 +4,12 @@ require_relative 'parser/ast_printer'
 require_relative 'parser/check_scope'
 require_relative 'parser/check_types'
 
-lx = Lexer.new('input.txt', false)
+if ARGV[0] == nil
+  puts "No file specified."
+  exit
+end
+
+lx = Lexer.new(ARGV[0], false)
 tokens = lx.get_tokens
 
 ps = Parser.new(tokens)

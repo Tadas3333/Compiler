@@ -1,5 +1,5 @@
 
-float asg(float a, float b): (
+int asg(float a, float b): (
   a = b;
 )
 
@@ -12,5 +12,5 @@ float apskaiciuoti(float x , float b): (
   pakolei(0): (
 
   )
-  grazinti b;
+  grazinti 4;
 )
