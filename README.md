@@ -29,4 +29,4 @@ int main() {
 # How to run it
 ```c
 ruby compiler.rb "file.txt"
-```c
+```
