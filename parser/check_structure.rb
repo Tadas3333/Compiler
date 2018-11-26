@@ -11,9 +11,21 @@ end
 
 class Program < Node
   def check_structure
+    main_found = false
+    last_func_token = nil
+
     @functions.each {|func|
-      !func.check_structure
+      if func.name.value == "main"
+        main_found = true
+      end
+
+      func.check_structure
+      last_func_token = func.name
     }
+
+    if !main_found
+      NoExitError.new("'main' function is not defined", Status.new(last_func_token.file_name, last_func_token.line))
+    end
   end
 end
 

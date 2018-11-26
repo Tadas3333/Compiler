@@ -11,8 +11,7 @@ class Scope
 
   def add(name)
     if declared?(name)
-      NoExitError.new("dublicate variable #{name.value}", Status.new(name.file_name, name.line))
-      return
+      Error.new("dublicate variable #{name.value}", Status.new(name.file_name, name.line))
     end
 
     @variables.push(name.value)
@@ -26,7 +25,7 @@ class Scope
 end
 
 def undeclared_var(name)
-  NoExitError.new("undeclared variable #{name.value}", Status.new(name.file_name, name.line))
+  Error.new("undeclared variable #{name.value}", Status.new(name.file_name, name.line))
 end
 
 class Node

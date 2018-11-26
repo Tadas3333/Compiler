@@ -50,12 +50,11 @@ class Parser
 <statements> ::= <statement> {<statement>}
 =end
   def parse_statement_region
-    expect(:S_COL)
-    expect(:OP_PAREN_O)
+    expect(:OP_BRACE_O)
 
     node = StatementsRegion.new
 
-    while @cur_token.name != :OP_PAREN_C
+    while @cur_token.name != :OP_BRACE_C
       node.add_statement(parse_statement)
     end
 

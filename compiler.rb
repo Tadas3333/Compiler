@@ -19,9 +19,10 @@ root = ps.parse_program
 #tp = AstPrinter.new
 #tp.print('root', root)
 
+root.check_scope
+
 $error_found = false
 
-root.check_scope
 root.check_types
 root.check_structure
 
