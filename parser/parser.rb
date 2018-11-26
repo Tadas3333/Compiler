@@ -24,7 +24,6 @@ class Parser
       node.add_function(parse_function_statement)
     end
 
-    puts "Parse success!"
     node
   end
 

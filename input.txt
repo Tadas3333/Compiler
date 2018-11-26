@@ -3,7 +3,7 @@ float asg(float a, float b): (
   a = b;
 )
 
-int apskaiciuoti(float x , float b): (
+float apskaiciuoti(float x , float b): (
   string a = "a" + "b";
   x = asg(0.0, b);
   jei(0): (
@@ -12,4 +12,5 @@ int apskaiciuoti(float x , float b): (
   pakolei(0): (
 
   )
+  grazinti b;
 )

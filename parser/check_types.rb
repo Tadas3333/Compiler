@@ -35,6 +35,10 @@ class FuncAndVar
     raise "variable #{token.value} not found"
   end
 
+  def get_current_function_type
+    @funcs.last.ret_type
+  end
+
   def get_call_type(node) # Call Expression
     @funcs.each { |func|
       if func.name.value == node.name.value
@@ -183,6 +187,13 @@ end
 
 class ReturnStatement < Statement
   def check_types(fna)
+    ret_type = :VOID
+
+    if @expr != nil
+      ret_type = @expr.get_expr_type(fna).name
+    end
+
+    types_match?(ret_type, fna.get_current_function_type, @token)
   end
 end
 

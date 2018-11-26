@@ -10,8 +10,8 @@ tokens = lx.get_tokens
 ps = Parser.new(tokens)
 root = ps.parse_program
 
-tp = AstPrinter.new
-tp.print('root', root)
+#tp = AstPrinter.new
+#tp.print('root', root)
 
 root.check_scope
 root.check_types
