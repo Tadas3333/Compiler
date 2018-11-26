@@ -81,6 +81,8 @@ class Parameter < Node
 end
 
 class StatementsRegion < Statement
+  attr_reader :statements
+
   def initialize
     @statements = []
   end
@@ -170,6 +172,8 @@ class WhileStatement < Statement
 end
 
 class BreakStatement < Statement
+  attr_reader :token
+
   def initialize(token)
     @token = token
   end
@@ -179,6 +183,8 @@ class BreakStatement < Statement
 end
 
 class ContinueStatement < Statement
+  attr_reader :token
+
   def initialize(token)
     @token = token
   end
@@ -188,6 +194,8 @@ class ContinueStatement < Statement
 end
 
 class ReturnStatement < Statement
+  attr_reader :token
+
   def initialize(token, expr)
     @token = token
     @expr = expr

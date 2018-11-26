@@ -18,7 +18,6 @@ class TypesCheck
 
   def initialize
     @funcs = []
-    @error = false
   end
 
   def add_function(node)
@@ -63,7 +62,7 @@ class TypesCheck
   def function_params_match?(func, call)
     if func.params.params.size != call.arguments.size
       NoExitError.new("#{call.name.value} parameters count does not match", Status.new(call.name.file_name, call.name.line))
-      @error = true
+      return
     end
 
     indx = 0
@@ -77,7 +76,6 @@ class TypesCheck
   def types_match?(type1, type2, lc_token)
     if type1 != type2
       NoExitError.new("type mismatch", Status.new(lc_token.file_name, lc_token.line))
-      @error = true
       return false
     end
 

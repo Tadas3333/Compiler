@@ -1,16 +1,18 @@
 
 int asg(float a, float b): (
   a = b;
+  return 0;
 )
 
 float apskaiciuoti(float x , float b): (
   string a = "a" + "b";
   x = asg(0.0, b);
-  jei(0): (
-    nutraukti;
+  break;
+  if(0): (
+    break;
   )
-  pakolei(0): (
+  while(0): (
 
   )
-  grazinti 4;
+  return 4;
 )

@@ -4,16 +4,16 @@ class Keywords
 
   def get_keyword(ident)
     case ident
-    when 'jei'; return :KW_IF
-    when 'kitjei'; return :KW_ELSEIF
-    when 'kitaip'; return :KW_ELSE
+    when 'if'; return :KW_IF
+    when 'elseif'; return :KW_ELSEIF
+    when 'else'; return :KW_ELSE
     when 'int'; return :KW_INT
     when 'float'; return :KW_FLOAT
     when 'string'; return :KW_STRING
-    when 'pakolei'; return :KW_WHILE
-    when 'nutraukti'; return :KW_BREAK
-    when 'testi'; return :KW_CONTINUE
-    when 'grazinti'; return :KW_RETURN
+    when 'while'; return :KW_WHILE
+    when 'break'; return :KW_BREAK
+    when 'continue'; return :KW_CONTINUE
+    when 'return'; return :KW_RETURN
     else; return :IDENT
     end
   end
