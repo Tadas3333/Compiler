@@ -1,5 +1,14 @@
+# How to run it
+```c
+ruby compiler.rb "input.txt"
+```
+
 # Syntax
 ```c
+/*
+  Program Description
+*/
+
 int calculate(int x, int y) {
   while(x < y) {
     x = x + 1;
@@ -7,6 +16,9 @@ int calculate(int x, int y) {
 
   if(x == y) {
     return 1;
+  }
+  elseif(x > y) {
+    return 2;
   }
 
   return 0;
@@ -18,15 +30,9 @@ int main() {
 
   if(calculate(a, b) != 0) {
     string s = "Success!";
-    print(s);
+    print(s); // Prints "Success!"
   }
 
   return 0;
 }
-
-```
-
-# How to run it
-```c
-ruby compiler.rb "file.txt"
 ```
