@@ -82,6 +82,17 @@ class ConstFloatExpression < Expression
   end
 end
 
+class ConstBoolExpression < Expression
+  attr_reader :tkn
+
+  def initialize(token)
+    @tkn = token
+  end
+
+  def print(p)
+  end
+end
+
 class VarExpression < Expression
   attr_reader :tkn
 

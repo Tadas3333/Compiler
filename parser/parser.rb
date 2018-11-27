@@ -76,6 +76,12 @@ class Parser
     when :KW_FLOAT
       next_token
       return :LIT_FLOAT
+    when :KW_VOID
+      next_token
+      return :VOID
+    when :KW_BOOL
+      next_token
+      return :BOOL
     else; token_error("Unexpected type! Found #{@cur_token.name}")
     end
   end

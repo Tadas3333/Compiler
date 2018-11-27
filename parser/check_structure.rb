@@ -10,13 +10,21 @@ class Node
 end
 
 class Program < Node
-  def check_structure
+  def check_structure(file_name)
     main_found = false
     last_func_token = nil
 
     @functions.each {|func|
       if func.name.value == "main"
         main_found = true
+
+        if func.ret_type != :LIT_INT
+          NoExitError.new("'main' function return type is not an integer", Status.new(func.name.file_name, func.name.line))
+        end
+
+        if func.params.params.size != 0
+          NoExitError.new("'main' function with parameters", Status.new(func.name.file_name, func.name.line))
+        end
       end
 
       func.check_structure
@@ -24,7 +32,11 @@ class Program < Node
     }
 
     if !main_found
-      NoExitError.new("'main' function is not defined", Status.new(last_func_token.file_name, last_func_token.line))
+      if @functions.size == 0
+        NoExitError.new("'main' function is not defined", Status.new(file_name, 0))
+      else
+        NoExitError.new("'main' function is not defined", Status.new(last_func_token.file_name, last_func_token.line))
+      end
     end
   end
 end
@@ -47,7 +59,7 @@ class FunctionDefinition < Definition
       end
     }
 
-    if !return_found
+    if !return_found && @ret_type != :VOID
       NoExitError.new("no return statement", Status.new(@name.file_name, @name.line))
     end
   end

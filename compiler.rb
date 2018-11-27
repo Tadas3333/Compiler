@@ -24,7 +24,7 @@ root.check_scope
 $error_found = false
 
 root.check_types
-root.check_structure
+root.check_structure(ARGV[0])
 
 if $error_found == true
   exit

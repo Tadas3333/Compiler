@@ -39,6 +39,10 @@ class Program < Node
     scope = Scope.new(nil)
 
     @functions.each {|func|
+      scope.add(func.name)
+    }
+
+    @functions.each {|func|
       func.check_scope(scope)
     }
   end
@@ -46,7 +50,6 @@ end
 
 class FunctionDefinition < Definition
   def check_scope(parent)
-    parent.add(@name)
     scope = Scope.new(parent)
     @params.check_scope(scope)
     @body.check_scope(scope)
@@ -87,7 +90,7 @@ end
 class DeclarationStatement < Statement
   def check_scope(parent)
     parent.add(@name)
-    @value.check_scope(parent)
+    @value.check_scope(parent) if @value != nil
   end
 end
 
@@ -171,6 +174,11 @@ class ConstStringExpression < Expression
 end
 
 class ConstFloatExpression < Expression
+  def check_scope(parent)
+  end
+end
+
+class ConstBoolExpression < Expression
   def check_scope(parent)
   end
 end

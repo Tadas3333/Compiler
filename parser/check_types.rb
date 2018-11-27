@@ -15,9 +15,11 @@ end
 
 class TypesCheck
   attr_reader :error
+  attr_accessor :current_func
 
   def initialize
     @funcs = []
+    @current_func = 0
   end
 
   def add_function(node)
@@ -38,7 +40,7 @@ class TypesCheck
   end
 
   def get_current_function_type
-    @funcs.last.ret_type
+    @funcs.at(@current_func).ret_type
   end
 
   def get_call_type(node) # Call Expression
@@ -74,8 +76,16 @@ class TypesCheck
   end
 
   def types_match?(type1, type2, lc_token)
+    if type1 == :FALSE || type1 == :TRUE
+      type1 = :BOOL
+    end
+
+    if type2 == :FALSE || type2 == :TRUE
+      type2 = :BOOL
+    end
+
     if type1 != type2
-      NoExitError.new("type mismatch", Status.new(lc_token.file_name, lc_token.line))
+      NoExitError.new("#{type1} and #{type2} mismatch", Status.new(lc_token.file_name, lc_token.line))
       return false
     end
 
@@ -94,7 +104,12 @@ class Program < Node
     fna = TypesCheck.new
 
     @functions.each {|func|
+      func.check_definition(fna)
+    }
+
+    @functions.each {|func|
       func.check_types(fna)
+      fna.current_func += 1
     }
 
     if fna.error
@@ -104,9 +119,12 @@ class Program < Node
 end
 
 class FunctionDefinition < Definition
-  def check_types(fna)
+  def check_definition(fna)
     fna.add_function(self)
     @params.check_types(fna)
+  end
+
+  def check_types(fna)
     @body.check_types(fna)
   end
 end
@@ -166,7 +184,9 @@ class Branch < Node
   def check_types(fna)
     @expr.check_types(fna)
     type_tkn = @expr.get_expr_type(fna)
-    fna.types_match?(type_tkn.name, :LIT_INT, type_tkn)
+    if type_tkn.name != :TRUE && type_tkn.name != :FALSE
+      fna.types_match?(type_tkn.name, :BOOL, type_tkn)
+    end
     @statements.check_types(fna)
   end
 end
@@ -181,7 +201,9 @@ class WhileStatement < Statement
   def check_types(fna)
     @expr.check_types(fna)
     type_tkn = @expr.get_expr_type(fna)
-    fna.types_match?(type_tkn.name, :LIT_INT, type_tkn)
+    if type_tkn.name != :TRUE && type_tkn.name != :FALSE
+      fna.types_match?(type_tkn.name, :BOOL, type_tkn)
+    end
     @statements.check_types(fna)
   end
 end
@@ -214,9 +236,27 @@ class BinaryExpression < Expression
     @right.check_types(fna)
     left_tkn = @left.get_expr_type(fna)
     fna.types_match?(left_tkn.name, @right.get_expr_type(fna).name, left_tkn)
+
+    if left_tkn.name == :LIT_STR
+      NoExitError.new("#{@operator} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
+    end
+
+    if left_tkn.name == :TRUE || left_tkn.name == :FALSE
+      NoExitError.new("#{@operator} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
+    end
+
+    if left_tkn.name == :VOID
+      NoExitError.new("#{@operator} operation with void", Status.new(left_tkn.file_name, left_tkn.line))
+    end
   end
 
   def get_expr_type(fna)
+    if [:OP_DE, :OP_GE, :OP_LE, :OP_NE, :OP_G, :OP_L].include?(@operator)
+      tkn = @left.get_expr_type(fna)
+      tkn.name = :BOOL
+      return tkn
+    end
+
     @left.get_expr_type(fna)
   end
 end
@@ -264,6 +304,15 @@ class ConstStringExpression < Expression
 end
 
 class ConstFloatExpression < Expression
+  def check_types(fna)
+  end
+
+  def get_expr_type(fna)
+    @tkn
+  end
+end
+
+class ConstBoolExpression < Expression
   def check_types(fna)
   end
 

@@ -112,6 +112,14 @@ class Parser
         tkn = expect(:IDENT)
         return VarExpression.new(tkn)
       end
+    when :KW_TRUE
+      tkn = expect(:KW_TRUE)
+      tkn.name = :TRUE
+      return ConstBoolExpression.new(tkn)
+    when :KW_FALSE
+      tkn = expect(:KW_FALSE)
+      tkn.name = :FALSE
+      return ConstBoolExpression.new(tkn)
     when :LIT_STR
       tkn = expect(:LIT_STR)
       return ConstStringExpression.new(tkn)

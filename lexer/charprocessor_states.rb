@@ -30,7 +30,7 @@ class CharProcessor
     when '}'; complete(:OP_BRACE_C, nil)
     when "\\"; complete(:S_ESC, nil)
     when "\n", "\r"; process_new_line
-    when " ", :S_EOF; # Do nothing
+    when " ", :S_EOF, :NON; # Do nothing
     when '/'
       if @next_char == '/'
         process_single_line_comment
@@ -48,7 +48,7 @@ class CharProcessor
       else
         complete(:S_DOT, nil)
       end
-    else; raise "Unprocessed character type #{@cur_type}"
+    else; raise "Unprocessed character #{@cur_char}"
     end
   end
 
@@ -206,6 +206,8 @@ class CharProcessor
     if @cur_char == "*" && @next_char == "/"
       @state = :DEFAULT
       @skip_next = true
+    elsif @cur_char == "\n" || @cur_char == "\r"
+      process_new_line
     end
   end
 end

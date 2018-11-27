@@ -1,5 +1,5 @@
 class Token
-  attr_reader :name
+  attr_accessor :name
   attr_reader :value
   attr_reader :file_name
   attr_reader :line
