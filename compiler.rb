@@ -4,13 +4,22 @@ require_relative 'parser/ast_printer'
 require_relative 'parser/check_scope'
 require_relative 'parser/check_types'
 require_relative 'parser/check_structure'
+require_relative 'generator/generator'
 
-if ARGV[0] == nil
-  puts "No file specified."
+input_file = ARGV[0]
+output_file = ARGV[1]
+
+if input_file == nil
+  puts "No input file specified."
   exit
 end
 
-lx = Lexer.new(ARGV[0], false)
+if output_file == nil
+  puts "No output file specified."
+  exit
+end
+
+lx = Lexer.new(input_file, false)
 tokens = lx.get_tokens
 
 ps = Parser.new(tokens)
@@ -24,8 +33,11 @@ root.check_scope
 $error_found = false
 
 root.check_types
-root.check_structure(ARGV[0])
+root.check_structure(input_file)
 
 if $error_found == true
   exit
 end
+
+gen = Generator.new(output_file)
+root.generate(gen)

@@ -222,6 +222,16 @@ class ReturnStatement < Statement
   end
 end
 
+def user_friendly_operator(opr)
+  case opr
+  when :OP_PLUS; return "+"
+  when :OP_MINUS; return "-"
+  when :OP_MULTIPLY; return "*"
+  when :OP_DIVIDE; return "/"
+  else; return opr
+  end
+end
+
 class BinaryExpression < Expression
   def check_types(fna)
     @left.check_types(fna)
@@ -229,16 +239,18 @@ class BinaryExpression < Expression
     left_tkn = @left.get_expr_type(fna)
     fna.types_match?(left_tkn.name, @right.get_expr_type(fna).name, left_tkn)
 
+    user_friendly_operators = []
+
     if left_tkn.name == :LIT_STR
-      NoExitError.new("#{@operator} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
     end
 
     if left_tkn.name == :BOOL
-      NoExitError.new("#{@operator} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
     end
 
     if left_tkn.name == :VOID
-      NoExitError.new("#{@operator} operation with void", Status.new(left_tkn.file_name, left_tkn.line))
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(left_tkn.file_name, left_tkn.line))
     end
   end
 
