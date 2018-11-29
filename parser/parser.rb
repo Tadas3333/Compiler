@@ -15,8 +15,6 @@ class Parser
     @indent = 0;
   end
 
-  # <start> ::= <functions> EOF
-  # <functions> ::= <function-statement> {<function-statement>}
   def parse_program
     node = Program.new
 
@@ -60,13 +58,6 @@ class Parser
 
   ##############################################################################
 
-=begin
-<type> ::= "int"
-            | "string"
-            | "float"
-            | "bool"
-            | "void"
-=end
   def parse_type
     case @cur_token.name
     when :KW_INT

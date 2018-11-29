@@ -1,7 +1,4 @@
 class Parser
-=begin
-<expression> ::= <operator-and> {"||" <operator-and>}
-=end
   def parse_expression
     left = parse_operator_and
 
@@ -15,9 +12,6 @@ class Parser
     left
   end
 
-=begin
-<operator-and> ::= <relational> {"&&" <relational>}
-=end
   def parse_operator_and
     left = parse_relational
 
@@ -31,9 +25,6 @@ class Parser
     left
   end
 
-=begin
-<relational> ::= <math> {<relational-symbol> <math>}
-=end
   def parse_relational
     left = parse_math
 
@@ -47,9 +38,6 @@ class Parser
     left
   end
 
-=begin
-<math> ::= <term> {"+"<term>, "-" <term>}
-=end
   def parse_math
     left = parse_term
 
@@ -63,9 +51,6 @@ class Parser
     left
   end
 
-=begin
-<term> ::= <unary> {"*" <unary>,"/" <unary>}
-=end
   def parse_term
     left = parse_unary
 
@@ -79,10 +64,6 @@ class Parser
     left
   end
 
-=begin
-<unary> ::= <factor>
-            | {"-","!","+"} <factor>
-=end
   def parse_unary
     return parse_factor unless [:OP_MINUS, :OP_N, :OP_PLUS].include?(@cur_token.name)
 
@@ -91,14 +72,6 @@ class Parser
     return UnaryExpression.new(oper, parse_unary)
   end
 
-=begin
-<factor> ::= "(" <expression> ")""
-            | <constant>
-            | <bool>
-            | <identifier>
-            | <function-call>
-            | <string>
-=end
   def parse_factor
     case @cur_token.name
     when :OP_PAREN_O
@@ -124,11 +97,6 @@ class Parser
     end
   end
 
-=begin
-<function-call> ::= <identifier> "(" ")"
-			| <identifier> "(" <arguments> ")"
-<arguments> ::= <expression> {"," <expression>}
-=end
   def parse_function_call
     s_ident = expect(:IDENT)
     expect(:OP_PAREN_O)
@@ -147,12 +115,6 @@ class Parser
     return CallExpression.new(s_ident, arguments)
   end
 
-=begin
-<constant> ::= <digits>
-            | <digits> "." <digits>
-            | <digits> "."
-            | "." <digits>
-=end
   def parse_constant
     case @cur_token.name
     when :LIT_INT

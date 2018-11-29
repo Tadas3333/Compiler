@@ -1,10 +1,5 @@
 
 class Parser
-=begin
-<function-statement> ::= <type> <identifier> "(" <parameters> ")" <statement-region>
-			| <type> <identifier> "(" ")" <statement-region>
-<parameters> ::= <type> <identifier> {"," <type> <identifier>}
-=end
   def parse_function_statement
     f_type = parse_type
     f_ident = expect(:IDENT)
@@ -44,11 +39,6 @@ class Parser
     return FunctionDefinition.new(f_ident, params, f_type, f_statements)
   end
 
-=begin
-<statement-region> ::= ":" "(" <statements> ")"
-					 | ":" "(" ")"
-<statements> ::= <statement> {<statement>}
-=end
   def parse_statement_region
     expect(:OP_BRACE_O)
 
@@ -62,14 +52,6 @@ class Parser
     return node
   end
 
-=begin
-<statement> ::= <jei-statement>
-            | <pakolei-statement>
-      			| <jump-statement>
-      			| <call-statement>
-      			| <assignment-statement>
-      			| <declaration-statement>
-=end
   def parse_statement
     case @cur_token.name
     when :KW_IF
@@ -91,18 +73,12 @@ class Parser
     end
   end
 
-=begin
-<call-statement> ::= <function-call> ";"
-=end
   def parse_call_statement
     c_expr = parse_function_call
     expect(:S_SCOL)
     return c_expr
   end
 
-=begin
-<assignment-statement> ::= <identifier> "=" <expression> ";"
-=end
   def parse_assignment_statement
     s_ident = expect(:IDENT)
     expect(:OP_E)
@@ -111,10 +87,6 @@ class Parser
     return AssignmentStatement.new(s_ident, s_exp)
   end
 
-=begin
-<declaration-statement> ::=	 | <type> <identifier> ";"
-			| <type> <identifier> "=" <expression> ";"
-=end
   def parse_declaration_statement
     v_type = parse_type
     v_name = expect(:IDENT)
@@ -131,11 +103,6 @@ class Parser
     return DeclarationStatement.new(v_type, v_name, v_expr)
   end
 
-=begin
-<jei-statement> ::= "jei" "(" <expression> ")" <statement-region>
-            | "jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
-            | "jei" "(" <expression> ")" <statement-region> <kitaip-statement>
-=end
   def parse_if_statement
     branches = []
     expect(:KW_IF)
@@ -159,11 +126,6 @@ class Parser
     return IfStatement.new(branches, else_statement)
   end
 
-=begin
-<kitaip-jei-statement> ::= "kitaip-jei" "(" <expression> ")" <statement-region>
-            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-jei-statement>
-            | "kitaip-jei" "(" <expression> ")" <statement-region> <kitaip-statement>
-=end
   def parse_elseif_statement
     expect(:KW_ELSEIF)
     expect(:OP_PAREN_O)
@@ -174,9 +136,6 @@ class Parser
     return Branch.new(s_expr, s_statements)
   end
 
-=begin
-<kitaip-statement> ::= "kitaip" <statement-region>
-=end
   def parse_else_statement
     expect(:KW_ELSE)
     s_statements = parse_statement_region
@@ -184,9 +143,6 @@ class Parser
     return ElseStatement.new(s_statements)
   end
 
-=begin
-<pakolei-statement> ::= "pakolei" "(" <expression> ")" <statement-region>
-=end
   def parse_while_statement
     expect(:KW_WHILE)
     expect(:OP_PAREN_O)
@@ -197,12 +153,6 @@ class Parser
     return WhileStatement.new(s_expr, s_statements)
   end
 
-=begin
-<jump-statement> ::= "nutraukti" ";"
-            | "testi" ";"
-			| "grazinti" ";"
-			| "grazinti" <expression> ";"
-=end
   def parse_jump_statement
     case @cur_token.name
     when :KW_BREAK
