@@ -84,7 +84,7 @@ class Parser
       else
         return parse_call_statement
       end
-    when :KW_INT, :KW_FLOAT, :KW_BOOL, :KW_VOID, :KW_STRING
+    when :KW_INT, :KW_FLOAT, :KW_TYPE_BOOL, :KW_VOID, :KW_STRING
       return parse_declaration_statement
     else
       token_error("Unexpected type! Found #{@cur_token.name}")

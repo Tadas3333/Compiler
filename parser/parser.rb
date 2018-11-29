@@ -64,6 +64,8 @@ class Parser
 <type> ::= "int"
             | "string"
             | "float"
+            | "bool"
+            | "void"
 =end
   def parse_type
     case @cur_token.name
@@ -79,7 +81,7 @@ class Parser
     when :KW_VOID
       next_token
       return :VOID
-    when :KW_BOOL
+    when :KW_TYPE_BOOL
       next_token
       return :BOOL
     else; token_error("Unexpected type! Found #{@cur_token.name}")

@@ -76,14 +76,6 @@ class TypesCheck
   end
 
   def types_match?(type1, type2, lc_token)
-    if type1 == :FALSE || type1 == :TRUE
-      type1 = :BOOL
-    end
-
-    if type2 == :FALSE || type2 == :TRUE
-      type2 = :BOOL
-    end
-
     if type1 != type2
       NoExitError.new("#{type1} and #{type2} mismatch", Status.new(lc_token.file_name, lc_token.line))
       return false
@@ -241,7 +233,7 @@ class BinaryExpression < Expression
       NoExitError.new("#{@operator} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
     end
 
-    if left_tkn.name == :TRUE || left_tkn.name == :FALSE
+    if left_tkn.name == :BOOL
       NoExitError.new("#{@operator} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
     end
 

@@ -68,7 +68,7 @@ class CharProcessor
       keywords = Keywords.new
       type = keywords.get_keyword(@buffer)
 
-      if type != :IDENT
+      if type != :IDENT && type != :BOOL
         complete(type, nil)
       else
         complete(type, @buffer)

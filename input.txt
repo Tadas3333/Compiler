@@ -1,12 +1,5 @@
 
 
 int main() {
-  while(true) {
-    if(false) {
-      break;
-    }
-  }
-
-
   return 1;
 }

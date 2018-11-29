@@ -11,9 +11,8 @@ class Keywords
     when 'float'; return :KW_FLOAT
     when 'string'; return :KW_STRING
     when 'void'; return :KW_VOID
-    when 'bool'; return :KW_BOOL
-    when 'true'; return :KW_TRUE
-    when 'false'; return :KW_FALSE
+    when 'bool'; return :KW_TYPE_BOOL
+    when 'true', 'false'; return :BOOL
     when 'while'; return :KW_WHILE
     when 'break'; return :KW_BREAK
     when 'continue'; return :KW_CONTINUE
