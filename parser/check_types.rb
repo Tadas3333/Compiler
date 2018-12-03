@@ -228,6 +228,7 @@ def user_friendly_operator(opr)
   when :OP_MINUS; return "-"
   when :OP_MULTIPLY; return "*"
   when :OP_DIVIDE; return "/"
+  when :OP_N; return "!"
   else; return opr
   end
 end
@@ -268,6 +269,27 @@ end
 class UnaryExpression < Expression
   def check_types(fna)
     @factor.check_types(fna)
+
+    l_tkn = @factor.get_expr_type(fna)
+
+    case @operator
+    when :OP_N
+      case l_tkn.name
+      when :LIT_INT;NoExitError.new("#{user_friendly_operator(@operator)} operation with integer", Status.new(l_tkn.file_name, l_tkn.line))
+      when :LIT_FLOAT;NoExitError.new("#{user_friendly_operator(@operator)} operation with float", Status.new(l_tkn.file_name, l_tkn.line))
+      when :VOID;NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(l_tkn.file_name, l_tkn.line))
+      when :LIT_STR;NoExitError.new("#{user_friendly_operator(@operator)} operation with string", Status.new(l_tkn.file_name, l_tkn.line))
+      else;
+      end
+    when :OP_MINUS
+      case l_tkn.name
+      when :BOOL;NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(l_tkn.file_name, l_tkn.line))
+      when :VOID;NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(l_tkn.file_name, l_tkn.line))
+      when :LIT_STR;NoExitError.new("#{user_friendly_operator(@operator)} operation with string", Status.new(l_tkn.file_name, l_tkn.line))
+      else;
+      end
+    else; raise "unknown operator #{operator}"
+    end
   end
 
   def get_expr_type(fna)
