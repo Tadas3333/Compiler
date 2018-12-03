@@ -1,5 +1,14 @@
-
-
 int main() {
-  return 1;
+  int x;
+  x = 1 + x;
+
+  while(true) {
+    if(x < 5) {
+      x = x + 1;
+    }
+    else {
+      break;
+    }
+  }
+  return 0;
 }

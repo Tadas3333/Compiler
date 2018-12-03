@@ -1,14 +1,87 @@
 require_relative '../parser/ast_statements'
 require_relative '../parser/ast_expressions'
 require_relative 'instructions'
+require_relative 'labels'
+require_relative 'nodes'
+
+=begin
+ TO DO LIST:
+  - Call function with less arguments
+  - Float, String, Bool types
+  - Multiple variable name scopes with variable deletes
+  - Function returns
+=end
+
+class GenVariable
+  attr_reader :type
+  attr_reader :name
+  attr_reader :adress
+
+  def initialize(type, name, adress)
+    @type = type
+    @name = name
+    @adress = adress
+  end
+end
+
+class GenFunction
+  attr_reader :name
+  attr_reader :adress
+
+  def initialize(name, adress)
+    @name = name
+    @adress = adress
+  end
+end
+
+class GenWhile
+  attr_reader :id
+  attr_reader :start_adress
+
+  def initialize(id, start_adress)
+    @id = id
+    @start_adress = start_adress
+  end
+end
 
 class Generator
+  attr_reader :stack_pointer
+
   def initialize(output_file)
     @output_file = output_file
+
+    @instructions = []
     @code = []
+    @functions = []
+    @whiles = []
+    @variables = []
+
+    @stack_pointer = -1
+    @label_index = 0
+    @current_line = 0
   end
 
+  #####################################################
+  # Instructions
   def dump
+    indx = 0
+    code_indx = 0
+    @instructions.each do |instr|
+      print "#{indx}:#{instr.name} "
+      code_indx += 1
+
+      i = 0
+      until i == instr.ops do
+        print "#{@code[code_indx]} "
+        code_indx += 1
+        i += 1
+      end
+
+      puts ""
+
+      indx += 1
+    end
+
     puts @code.inspect
   end
 
@@ -22,157 +95,24 @@ class Generator
     @code.push(inst.opcode)
 
     ops.each { |op|
-
+      @code.push(op)
     }
-  end
-end
 
-class Node
-  def generate(gen)
-    raise 'generate not implemented for class %s' % [self.class]
+    @instructions << inst
+    @current_line += 1
+    @stack_pointer += inst.stack_change
   end
-end
 
-class Program < Node
-  def generate(gen)
-    @functions.each { |func|
-      if func.name.value == "main"
-        func.generate(gen)
-        break
+  def add_variable(type, name, stack_pos = @stack_pointer)
+    @variables << GenVariable.new(type, name, stack_pos)
+  end
+
+  def get_variable_adress(name)
+    @variables.each do |var|
+      if var.name == name
+        return var.adress
       end
-    }
-
-    gen.write(:EXIT)
-
-    @functions.each { |func|
-      if func.name.value != "main"
-        func.generate(gen)
-      end
-    }
-
-    gen.dump
-  end
-end
-
-class FunctionDefinition < Definition
-  def generate(gen)
-    @params.generate(gen)
-    @body.generate(gen)
-    gen.write(:RET)
-  end
-end
-
-class Parameters < Node
-  def generate(gen)
-    @params.each { |param|
-      param.generate(gen)
-    }
-  end
-end
-
-class Parameter < Node
-  def generate(gen)
-  end
-end
-
-class StatementsRegion < Statement
-  def generate(gen)
-    @statements.each { |stmt|
-      stmt.generate(gen)
-    }
-  end
-end
-
-class AssignmentStatement < Statement
-  def generate(gen)
-    # Get variable adress and assign value
-  end
-end
-
-class DeclarationStatement < Statement
-  def generate(gen)
-    # Create variable
-  end
-end
-
-class IfStatement < Statement
-  def generate(gen)
-    @branches.each { |branch|
-      branch.generate(gen)
-    }
-
-    @else_statement.generate(gen) if @else_statement != nil
-  end
-end
-
-class Branch < Node
-  def generate(gen)
-  end
-end
-
-class ElseStatement < Statement
-  def generate(gen)
-    @statements.generate(gen)
-  end
-end
-
-class WhileStatement < Statement
-  def generate(gen)
-    @statements.generate(gen)
-  end
-end
-
-class BreakStatement < Statement
-  def generate(gen)
-  end
-end
-
-class ContinueStatement < Statement
-  def generate(gen)
-  end
-end
-
-class ReturnStatement < Statement
-  def generate(gen)
-  end
-end
-
-class BinaryExpression < Expression
-  def generate(gen)
-  end
-end
-
-class UnaryExpression < Expression
-  def generate(gen)
-  end
-end
-
-class CallExpression < Expression
-  def generate(gen)
-  end
-end
-
-class ConstIntExpression < Expression
-  def generate(gen)
-  end
-end
-
-class ConstStringExpression < Expression
-  def generate(gen)
-  end
-end
-
-class ConstFloatExpression < Expression
-  def generate(gen)
-  end
-end
-
-class ConstBoolExpression < Expression
-  def generate(gen)
-  end
-end
-
-class VarExpression < Expression
-  def generate(gen)
+    end
+    raise "#{name} variable doesn't exist"
   end
 end
