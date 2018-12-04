@@ -3,64 +3,156 @@ require_relative 'ast_expressions'
 require_relative '../status'
 require_relative '../error'
 
+class StructureStatus
+  attr_accessor :parents_stack
+  attr_accessor :inside_loop
+  attr_accessor :return_found
+  attr_accessor :main_found
+
+  def initialize
+    @parents_stack = []
+    @return_found = false
+    @main_found = false
+  end
+
+  def does_statement_exist?(statement)
+    @parents_stack.each do |parent|
+      if parent == statement
+        return true
+      end
+    end
+
+    false
+  end
+end
+
 class Node
-  def check_structure
+  def check_structure(ss)
     raise 'check_structure not implemented for class %s' % [self.class]
   end
 end
 
 class Program < Node
   def check_structure(file_name)
-    main_found = false
-    last_func_token = nil
-
-    @functions.each {|func|
-      if func.name.value == "main"
-        main_found = true
-
-        if func.ret_type != :LIT_INT
-          NoExitError.new("'main' function return type is not an integer", Status.new(func.name.file_name, func.name.line))
-        end
-
-        if func.params.params.size != 0
-          NoExitError.new("'main' function with parameters", Status.new(func.name.file_name, func.name.line))
-        end
-      end
-
-      func.check_structure
-      last_func_token = func.name
-    }
-
-    if !main_found
-      if @functions.size == 0
-        NoExitError.new("'main' function is not defined", Status.new(file_name, 0))
-      else
-        NoExitError.new("'main' function is not defined", Status.new(last_func_token.file_name, last_func_token.line))
-      end
+    ss = StructureStatus.new
+    ss.parents_stack << self.class.name
+    @functions.each do |func|
+      func.check_structure(ss)
     end
+
+    if !ss.main_found
+      NoExitError.new("'main' function doesn't exist", Status.new(file_name, 0))
+    end
+    ss.parents_stack.pop
   end
 end
 
 class FunctionDefinition < Definition
-  def check_structure
-    return_found = false
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
 
-    @body.statements.each { |statement|
-      if statement.is_a?(ReturnStatement)
-        return_found = true
+    if @name.value == 'main'
+      ss.main_found = true
+
+      if @ret_type != :LIT_INT
+        NoExitError.new("#{@name.value} function return type is not integer", Status.new(@name.file_name, @name.line))
       end
-
-      if statement.is_a?(BreakStatement)
-        NoExitError.new("break statement is not in a cycle", Status.new(statement.token.file_name, statement.token.line))
-      end
-
-      if statement.is_a?(ContinueStatement)
-        NoExitError.new("continue statement is not in a cycle", Status.new(statement.token.file_name, statement.token.line))
-      end
-    }
-
-    if !return_found && @ret_type != :VOID
-      NoExitError.new("no return statement", Status.new(@name.file_name, @name.line))
     end
+
+    ss.return_found = false
+    @body.check_structure(ss)
+
+    if @ret_type != :VOID && !ss.return_found
+      NoExitError.new("no return statement in '#{@name.value}'", Status.new(@name.file_name, @name.line))
+    end
+
+    ss.parents_stack.pop
+  end
+end
+
+class StatementsRegion < Statement
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
+    @statements.each do |stmt|
+      stmt.check_structure(ss)
+    end
+    ss.parents_stack.pop
+  end
+end
+
+class AssignmentStatement < Statement
+  def check_structure(ss)
+  end
+end
+
+class DeclarationStatement < Statement
+  def check_structure(ss)
+  end
+end
+
+class IfStatement < Statement
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
+
+    @branches.each do |branch|
+      branch.check_structure(ss)
+    end
+
+    if @else_statement != nil
+      @else_statement.check_structure(ss)
+    end
+
+    ss.parents_stack.pop
+  end
+end
+
+class Branch < Node
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
+    @statements.check_structure(ss)
+    ss.parents_stack.pop
+  end
+end
+
+class ElseStatement < Statement
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
+    @statements.check_structure(ss)
+    ss.parents_stack.pop
+  end
+end
+
+class WhileStatement < Statement
+  def check_structure(ss)
+    ss.parents_stack << self.class.name
+    @statements.check_structure(ss)
+    ss.parents_stack.pop
+  end
+end
+
+class BreakStatement < Statement
+  def check_structure(ss)
+    if !ss.does_statement_exist?("WhileStatement")
+      NoExitError.new("break statement is not inside a loop", Status.new(@token.file_name, @token.line))
+    end
+  end
+end
+
+class ContinueStatement < Statement
+  def check_structure(ss)
+    if !ss.does_statement_exist?("WhileStatement")
+      NoExitError.new("continue statement is not inside a loop", Status.new(@token.file_name, @token.line))
+    end
+  end
+end
+
+class ReturnStatement < Statement
+  def check_structure(ss)
+    ss.return_found = true
+  end
+end
+
+class CallExpression < Expression
+  def check_structure(ss)
   end
 end

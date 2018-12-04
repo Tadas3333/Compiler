@@ -228,6 +228,8 @@ def user_friendly_operator(opr)
   when :OP_MINUS; return "-"
   when :OP_MULTIPLY; return "*"
   when :OP_DIVIDE; return "/"
+  when :OP_DAND; return "&&"
+  when :OP_DOR; return "||"
   when :OP_N; return "!"
   else; return opr
   end
@@ -246,7 +248,7 @@ class BinaryExpression < Expression
       NoExitError.new("#{user_friendly_operator(@operator)} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
     end
 
-    if left_tkn.name == :BOOL
+    if left_tkn.name == :BOOL && @operator != :OP_DAND && @operator != :OP_DOR
       NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
     end
 

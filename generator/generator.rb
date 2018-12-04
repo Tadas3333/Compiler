@@ -4,33 +4,41 @@ require_relative 'instructions'
 require_relative 'labels'
 require_relative 'nodes'
 
-=begin
- TO DO LIST:
-  - Call function with less arguments
-  - Float, String, Bool types
-  - Multiple variable name scopes with variable deletes
-  - Function returns
-=end
-
 class GenVariable
   attr_reader :type
   attr_reader :name
-  attr_reader :adress
 
-  def initialize(type, name, adress)
+  def initialize(type, name)
     @type = type
     @name = name
-    @adress = adress
   end
 end
 
 class GenFunction
   attr_reader :name
   attr_reader :adress
+  attr_reader :variables
 
   def initialize(name, adress)
     @name = name
     @adress = adress
+    @variables = []
+  end
+
+  def add_variable(type, name)
+    @variables << GenVariable.new(type, name)
+  end
+
+  def get_variable_adress(name)
+    indx = 0
+    @variables.each do |var|
+      if var.name == name
+        return indx
+      end
+      indx += 1
+    end
+
+    raise "#{name} variable doesn't exist"
   end
 end
 
@@ -54,32 +62,28 @@ class Generator
     @code = []
     @functions = []
     @whiles = []
-    @variables = []
 
-    @stack_pointer = -1
+    @current_function = 0
     @label_index = 0
-    @current_line = 0
+    @code_index = 0
   end
 
   #####################################################
   # Instructions
   def dump
-    indx = 0
     code_indx = 0
     @instructions.each do |instr|
-      print "#{indx}:#{instr.name} "
-      code_indx += 1
+      print "#{code_indx}:#{instr.name} "
 
       i = 0
       until i == instr.ops do
-        print "#{@code[code_indx]} "
         code_indx += 1
+        print "#{@code[code_indx]} "
         i += 1
       end
 
       puts ""
-
-      indx += 1
+      code_indx += 1
     end
 
     puts @code.inspect
@@ -93,26 +97,33 @@ class Generator
     end
 
     @code.push(inst.opcode)
+    @code_index += 1
 
     ops.each { |op|
       @code.push(op)
+      @code_index += 1
     }
 
     @instructions << inst
-    @current_line += 1
-    @stack_pointer += inst.stack_change
   end
 
-  def add_variable(type, name, stack_pos = @stack_pointer)
-    @variables << GenVariable.new(type, name, stack_pos)
+  def add_variable(type, name)
+    @functions.at(@current_function).add_variable(type, name)
   end
 
   def get_variable_adress(name)
-    @variables.each do |var|
-      if var.name == name
-        return var.adress
+    @functions.at(@current_function).get_variable_adress(name)
+  end
+
+  def set_current_function(name)
+    indx = 0
+    @functions.each do |func|
+      if func.name == name
+        return @current_function = indx
       end
+      indx += 1
     end
-    raise "#{name} variable doesn't exist"
+
+    raise "#{name} function doesn't exist"
   end
 end

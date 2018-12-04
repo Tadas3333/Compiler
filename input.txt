@@ -1,14 +1,9 @@
 int main() {
-  int x;
-  x = 1 + x;
+  int a;
+  asd(a);
+  return 1;
+}
 
-  while(true) {
-    if(x < 5) {
-      x = x + 1;
-    }
-    else {
-      break;
-    }
-  }
-  return 0;
+int asd(int a) {
+  return 1;
 }

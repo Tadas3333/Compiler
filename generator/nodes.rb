@@ -23,28 +23,23 @@ end
 class FunctionDefinition < Definition
   def generate(gen)
     gen.label_function(@name.value)
-    @params.generate(gen) # Load passed parameters
+    gen.set_current_function(@name.value)
+    @params.generate(gen)
     @body.generate(gen)
   end
 end
 
 class Parameters < Node
   def generate(gen)
-    indx = 0
-    @params.each { |param|
-      param.generate(gen, gen.stack_pointer-@params.size+indx)
-      indx += 1
-    }
+    @params.each do |param|
+      param.generate(gen)
+    end
   end
 end
 
 class Parameter < Node
-  def generate(gen, stack_pos)
-    if @value != nil
-      @value.generate(gen)
-    end
-
-    gen.add_variable(@type, @name.value, stack_pos)
+  def generate(gen)
+    gen.add_variable(@type, @name.value)
   end
 end
 
@@ -151,6 +146,7 @@ class ReturnStatement < Statement
   def generate(gen)
     if @expr != nil
       @expr.generate(gen)
+      return gen.write(:RET_V)
     end
 
     gen.write(:RET)
@@ -173,6 +169,8 @@ class BinaryExpression < Expression
     when :OP_NE; gen.write(:COM_NE)
     when :OP_G; gen.write(:COM_G)
     when :OP_L; gen.write(:COM_L)
+    when :OP_DAND; gen.write(:AND)
+    when :OP_DOR; gen.write(:OR)
     else; raise("unknown operator #{@operator}")
     end
   end
@@ -192,13 +190,14 @@ end
 
 class CallExpression < Expression
   def generate(gen)
-    # Pass arguments to function by pushing them to stack
+    missing_label = gen.place_missing_call_label(@name.value)
+    gen.write(:PUSH_I, missing_label)
+
     @arguments.each{ |arg|
       arg.generate(gen)
     }
 
-    missing_label = gen.place_missing_call_label(@name.value)
-    gen.write(:CALL, missing_label)
+    gen.write(:CALL, @arguments.size)
   end
 end
 

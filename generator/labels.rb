@@ -3,7 +3,7 @@ class Generator
   #####################################################
   # Typical Labels
   def place_label
-    @current_line
+    @code_index
   end
 
   def place_missing_label
@@ -23,7 +23,7 @@ class Generator
   #####################################################
   # Call Labels
   def label_function(function_name)
-    @functions << GenFunction.new(function_name, @current_line)
+    @functions << GenFunction.new(function_name, @code_index)
   end
 
   def place_missing_call_label(function_name)
@@ -47,8 +47,8 @@ class Generator
   #####################################################
   # While Labels
   def place_while_start_label
-    @whiles << GenWhile.new(@whiles.size, @current_line)
-    return @current_line
+    @whiles << GenWhile.new(@whiles.size, @code_index)
+    return @code_index
   end
 
   def get_while_start_label
