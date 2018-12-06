@@ -5,6 +5,7 @@ require_relative 'parser/check_scope'
 require_relative 'parser/check_types'
 require_relative 'parser/check_structure'
 require_relative 'generator/generator'
+require_relative 'virtual_machine'
 
 input_file = ARGV[0]
 output_file = ARGV[1]
@@ -39,5 +40,10 @@ if $error_found == true
   exit
 end
 
-gen = Generator.new(output_file)
+gen = Generator.new
 root.generate(gen)
+gen.write_to_file(output_file)
+gen.dump
+
+vm = VirtualMachine.new
+vm.run(gen.code)

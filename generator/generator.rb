@@ -53,11 +53,9 @@ class GenWhile
 end
 
 class Generator
-  attr_reader :stack_pointer
+  attr_reader :code
 
-  def initialize(output_file)
-    @output_file = output_file
-
+  def initialize
     @instructions = []
     @code = []
     @functions = []
@@ -71,20 +69,22 @@ class Generator
   #####################################################
   # Instructions
   def dump
-    code_indx = 0
-    @instructions.each do |instr|
-      print "#{code_indx}:#{instr.name} "
+=begin
+code_indx = 0
+@instructions.each do |instr|
+  print "#{code_indx}:#{instr.name} "
 
-      i = 0
-      until i == instr.ops do
-        code_indx += 1
-        print "#{@code[code_indx]} "
-        i += 1
-      end
+  i = 0
+  until i == instr.ops do
+    code_indx += 1
+    print "#{@code[code_indx]} "
+    i += 1
+  end
 
-      puts ""
-      code_indx += 1
-    end
+  puts ""
+  code_indx += 1
+end
+=end
 
     puts @code.inspect
   end
@@ -105,6 +105,10 @@ class Generator
     }
 
     @instructions << inst
+  end
+
+  def write_to_file(file_name)
+
   end
 
   def add_variable(type, name)

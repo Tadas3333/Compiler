@@ -27,11 +27,11 @@ class TypesCheck
   end
 
   def add_variable(node)
-    @funcs.last.variables.push(Variable.new(node.type, node.name))
+    @funcs.at(@current_func).variables.push(Variable.new(node.type, node.name))
   end
 
   def get_var_type(token)
-    @funcs.last.variables.each { |var|
+    @funcs.at(@current_func).variables.each { |var|
       if var.name.value == token.value
         return Token.new(var.type, '', token.file_name, token.line)
       end
@@ -97,7 +97,10 @@ class Program < Node
 
     @functions.each {|func|
       func.check_definition(fna)
+      fna.current_func += 1
     }
+
+    fna.current_func = 0
 
     @functions.each {|func|
       func.check_types(fna)

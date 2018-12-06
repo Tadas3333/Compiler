@@ -16,7 +16,6 @@ class Program < Node
     }
 
     gen.replace_missing_call_labels
-    gen.dump
   end
 end
 
@@ -190,12 +189,16 @@ end
 
 class CallExpression < Expression
   def generate(gen)
-    missing_label = gen.place_missing_call_label(@name.value)
-    gen.write(:PUSH_I, missing_label)
+    gen.write(:PUSH_I, 0) # Will hold return_value
+    gen.write(:PUSH_I, 0) # Will hold @fp
+    gen.write(:PUSH_I, 0) # Will hold return_adress
 
     @arguments.each{ |arg|
       arg.generate(gen)
     }
+
+    missing_label = gen.place_missing_call_label(@name.value)
+    gen.write(:PUSH_I, missing_label) # Pushes jump adress
 
     gen.write(:CALL, @arguments.size)
   end
