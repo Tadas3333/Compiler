@@ -9,6 +9,7 @@ class Instructions
     when :MUL_I; return Instruction.new(name, 100, 0)
     when :SUB_I; return Instruction.new(name, 200, 0)
     when :DIV_I; return Instruction.new(name, 300, 0)
+    when :MOD_I; return Instruction.new(name, 2700, 0)
     when :NOT_I; return Instruction.new(name, 400, 0)
     when :NEG_I; return Instruction.new(name, 500, 0)
     when :PEEK; return Instruction.new(name, 600, 1)
@@ -28,9 +29,11 @@ class Instructions
     when :COM_L; return Instruction.new(name, 2000, 0)
     when :AND; return Instruction.new(name, 2100, 0)
     when :OR; return Instruction.new(name, 2200, 0)
-    when :PRINT_STACK; return Instruction.new(name, 2300, 1)
-    when :PRINT_VAL; return Instruction.new(name, 2400, 1)
-    when :EXIT; return Instruction.new(name, 2500, 0)
+    when :PRINT; return Instruction.new(name, 2300, 0)
+    when :GINP; return Instruction.new(name, 2400, 0)
+    when :ITS; return Instruction.new(name, 2500, 0)
+    when :STI; return Instruction.new(name, 2800, 0)
+    when :EXIT; return Instruction.new(name, 2600, 0)
     else; raise "#{name} instruction not implemented"
     end
   end

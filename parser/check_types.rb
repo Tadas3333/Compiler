@@ -1,5 +1,6 @@
 require_relative 'ast_statements'
 require_relative 'ast_expressions'
+require_relative '../standart_library'
 require_relative '../status'
 require_relative '../error'
 
@@ -100,8 +101,29 @@ class Program < Node
       fna.current_func += 1
     }
 
-    fna.current_func = 0
+    df = StandartLibrary.new
+    df.functions.each { |key, info_hash|
+      r_type = info_hash.fetch('type')
+      params = info_hash.fetch('params')
 
+      indx = 0
+      params_class = Parameters.new
+      params.each { |pr|
+        params_class.add_parameter(Parameter.new(pr, Token.new(:IDENT, indx, "StandartLibrary", 0), nil))
+        indx += 1
+      }
+
+      funcdef = FunctionDefinition.new(Token.new(:IDENT, key, "StandartLibrary", 0), params_class, r_type, nil)
+      fna.add_function(funcdef)
+
+      funcdef.params.params.each { |pr|
+        fna.add_variable(pr)
+      }
+
+      fna.current_func += 1
+    }
+
+    fna.current_func = 0
     @functions.each {|func|
       func.check_types(fna)
       fna.current_func += 1
@@ -116,11 +138,12 @@ end
 class FunctionDefinition < Definition
   def check_definition(fna)
     fna.add_function(self)
+
     @params.check_types(fna)
   end
 
   def check_types(fna)
-    @body.check_types(fna)
+    @body.check_types(fna) if @body != nil
   end
 end
 
@@ -231,6 +254,7 @@ def user_friendly_operator(opr)
   when :OP_MINUS; return "-"
   when :OP_MULTIPLY; return "*"
   when :OP_DIVIDE; return "/"
+  when :OP_MOD; return "%"
   when :OP_DAND; return "&&"
   when :OP_DOR; return "||"
   when :OP_N; return "!"

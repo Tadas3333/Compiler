@@ -10,6 +10,7 @@ class Program < Node
     # Call main function and exit the program
     CallExpression.new(Token.new(0, 'main', 0, 0), []).generate(gen)
     gen.write(:EXIT)
+    gen.generate_standart_libray
 
     @functions.each { |func|
       func.generate(gen)
@@ -25,6 +26,10 @@ class FunctionDefinition < Definition
     gen.set_current_function(@name.value)
     @params.generate(gen)
     @body.generate(gen)
+
+    if @ret_type == :VOID
+      gen.write(:RET)
+    end
   end
 end
 
@@ -60,13 +65,14 @@ end
 
 class DeclarationStatement < Statement
   def generate(gen)
+    gen.write(:PUSH_I, 0)
+    gen.add_variable(@type, @name.value)
+
     if @value != nil
       @value.generate(gen)
-    else
-      gen.write(:PUSH_I, 0)
+      adr = gen.get_variable_adress(@name.value)
+      gen.write(:POKE, adr)
     end
-
-    gen.add_variable(@type, @name.value)
   end
 end
 
@@ -162,8 +168,9 @@ class BinaryExpression < Expression
     when :OP_MINUS; gen.write(:SUB_I)
     when :OP_DIVIDE; gen.write(:DIV_I)
     when :OP_MULTIPLY; gen.write(:MUL_I)
+    when :OP_MOD; gen.write(:MOD_I)
     when :OP_DE; gen.write(:COM_E)
-    when :OP_DE; gen.write(:COM_GE)
+    when :OP_GE; gen.write(:COM_GE)
     when :OP_LE; gen.write(:COM_LE)
     when :OP_NE; gen.write(:COM_NE)
     when :OP_G; gen.write(:COM_G)
@@ -212,13 +219,13 @@ end
 
 class ConstStringExpression < Expression
   def generate(gen)
-    # TO DO
+    gen.write(:PUSH_I, @tkn.value)
   end
 end
 
 class ConstFloatExpression < Expression
   def generate(gen)
-    # TO DO
+    gen.write(:PUSH_I, @tkn.value)
   end
 end
 

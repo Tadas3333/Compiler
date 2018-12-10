@@ -1,5 +1,6 @@
 require_relative 'ast_statements'
 require_relative 'ast_expressions'
+require_relative '../standart_library'
 require_relative '../status'
 require_relative '../error'
 
@@ -40,6 +41,11 @@ class Program < Node
 
     @functions.each {|func|
       scope.add(func.name)
+    }
+
+    df = StandartLibrary.new
+    df.functions.each_key { |key|
+      scope.add(Token.new(:IDENT, key, "StandartLibrary", 0))
     }
 
     @functions.each {|func|

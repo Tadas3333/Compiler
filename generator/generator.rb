@@ -1,5 +1,6 @@
 require_relative '../parser/ast_statements'
 require_relative '../parser/ast_expressions'
+require_relative '../standart_library'
 require_relative 'instructions'
 require_relative 'labels'
 require_relative 'nodes'
@@ -69,22 +70,20 @@ class Generator
   #####################################################
   # Instructions
   def dump
-=begin
-code_indx = 0
-@instructions.each do |instr|
-  print "#{code_indx}:#{instr.name} "
+    code_indx = 0
+    @instructions.each do |instr|
+      print "#{code_indx}:#{instr.name} "
 
-  i = 0
-  until i == instr.ops do
-    code_indx += 1
-    print "#{@code[code_indx]} "
-    i += 1
-  end
+      i = 0
+      until i == instr.ops do
+        code_indx += 1
+        print "#{@code[code_indx]} "
+        i += 1
+      end
 
-  puts ""
-  code_indx += 1
-end
-=end
+      puts ""
+      code_indx += 1
+    end
 
     puts @code.inspect
   end
@@ -129,5 +128,9 @@ end
     end
 
     raise "#{name} function doesn't exist"
+  end
+
+  def generate_standart_libray
+    StandartLibrary.new.generate(self)
   end
 end

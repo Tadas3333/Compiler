@@ -19,6 +19,7 @@ class CharProcessor
     when '+'; complete(:OP_PLUS, nil)
     when '-'; complete(:OP_MINUS, nil)
     when '*'; complete(:OP_MULTIPLY, nil)
+    when '%'; complete(:OP_MOD, nil)
     when ','; complete(:S_COM, nil)
     when ':'; complete(:S_COL, nil)
     when ';'; complete(:S_SCOL, nil)
@@ -28,6 +29,7 @@ class CharProcessor
     when ')'; complete(:OP_PAREN_C, nil)
     when '{'; complete(:OP_BRACE_O, nil)
     when '}'; complete(:OP_BRACE_C, nil)
+    when '_'; complete(:S_UND, nil)
     when "\\"; complete(:S_ESC, nil)
     when "\n", "\r"; process_new_line
     when " ", :S_EOF, :NON; # Do nothing
@@ -62,7 +64,7 @@ class CharProcessor
 
     # Check next character
     case @next_char
-    when 'a'..'z', 'A'..'Z', '0'..'9'
+    when 'a'..'z', 'A'..'Z', '0'..'9', '_'
       # Do nothing
     else
       keywords = Keywords.new

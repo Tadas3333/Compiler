@@ -1,4 +1,7 @@
 
+class TrueClass; def to_i; 1; end; end
+class FalseClass; def to_i; 0; end; end
+
 class VirtualMachine
   def initialize
     @code_base = 2000
@@ -6,6 +9,7 @@ class VirtualMachine
     @ip = @code_base
     @sp = 4000
     @fp = 0
+    @rp = 0
   end
 
   def run(code)
@@ -18,6 +22,7 @@ class VirtualMachine
       when 100; b = pop; a = pop; push(a*b);
       when 200; b = pop; a = pop; push(a-b);
       when 300; b = pop; a = pop; push(a/b);
+      when 2700; b = pop; a = pop; push(a%b);
       when 400; push(!pop);
       when 500; push(-pop);
       when 600; adress = load_operand; push(@memory[@fp+adress]);
@@ -34,17 +39,19 @@ class VirtualMachine
         end
       when 1300; return_back
       when 1400; value = pop; return_back(value)
-      when 1500; b = pop; a = pop; push((a == b) ? 1 : 0);
-      when 1600; b = pop; a = pop; push((a >= b) ? 1 : 0);
-      when 1700; b = pop; a = pop; push((a <= b) ? 1 : 0);
-      when 1800; b = pop; a = pop; push((a != b) ? 1 : 0);
-      when 1900; b = pop; a = pop; push((a >= b) ? 1 : 0);
-      when 2000; b = pop; a = pop; push((a < b) ? 1 : 0);
-      when 2100; b = pop; a = pop; push((a && b) ? 1 : 0);
-      when 2200; b = pop; a = pop; push((a || b) ? 1 : 0);
-      when 2300; oper = load_operand; puts ":PRINT(stack at -#{oper}): #{@memory[@sp-oper]}";
-      when 2400; value = load_operand; puts ":PRINT_VAL: #{value}";
-      when 2500; break;
+      when 1500; b = pop; a = pop; push((a == b).to_i);
+      when 1600; b = pop; a = pop; push((a >= b).to_i);
+      when 1700; b = pop; a = pop; push((a <= b).to_i);
+      when 1800; b = pop; a = pop; push((a != b).to_i0);
+      when 1900; b = pop; a = pop; push((a > b).to_i);
+      when 2000; b = pop; a = pop; push((a < b).to_i);
+      when 2100; b = pop; a = pop; push((a && b).to_i);
+      when 2200; b = pop; a = pop; push((a || b).to_i);
+      when 2300; value = pop; print "#{value}";
+      when 2400; input = STDIN.gets; push(input)
+      when 2500; value = pop; push(value.to_s)
+      when 2800; value = pop; push(value.to_i)
+      when 2600; break;
       else; raise "unknown instruction #{opcode}"
       end
 

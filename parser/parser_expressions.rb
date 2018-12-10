@@ -54,7 +54,7 @@ class Parser
   def parse_term
     left = parse_unary
 
-    while [:OP_MULTIPLY, :OP_DIVIDE].include?(@cur_token.name)
+    while [:OP_MULTIPLY, :OP_DIVIDE, :OP_MOD].include?(@cur_token.name)
       retrn_tkn = @cur_token
       next_token
       right = parse_unary
