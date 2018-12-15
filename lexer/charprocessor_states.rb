@@ -27,6 +27,8 @@ class CharProcessor
     when '$'; complete(:S_DOL, nil)
     when '('; complete(:OP_PAREN_O, nil)
     when ')'; complete(:OP_PAREN_C, nil)
+    when '['; complete(:OP_SQBR_O, nil)
+    when ']'; complete(:OP_SQBR_C, nil)
     when '{'; complete(:OP_BRACE_O, nil)
     when '}'; complete(:OP_BRACE_C, nil)
     when '_'; complete(:S_UND, nil)

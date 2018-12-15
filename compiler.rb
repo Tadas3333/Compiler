@@ -44,6 +44,7 @@ gen = Generator.new
 root.generate(gen)
 gen.write_to_file(output_file)
 #gen.dump
+strings = gen.strings
 
 vm = VirtualMachine.new
-vm.run(gen.code)
+vm.run(output_file, strings)

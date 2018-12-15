@@ -28,21 +28,26 @@ end
 class FunctionDefinition < Definition
   attr_reader :name
   attr_reader :ret_type
+  attr_reader :pointer_depth
   attr_reader :params
   attr_reader :variables
+  attr_reader :r_any_pointer
 
-  def initialize(name, params, ret_type, body)
+  def initialize(name, params, ret_type, pointer_depth, body, r_any_pointer = false)
     @name = name
     @params = params
     @ret_type = ret_type
+    @pointer_depth = pointer_depth
     @body = body
     @variables = []
+    @r_any_pointer = r_any_pointer
   end
 
   def print(p)
     p.print 'name', @name
     p.print 'params', @params
     p.print 'ret_type', @ret_type
+    p.print 'pointer_depth', @pointer_dept
     p.print 'body', @body
   end
 end
@@ -66,17 +71,20 @@ end
 class Parameter < Node
   attr_reader :type
   attr_reader :name
+  attr_reader :pointer_depth
 
-  def initialize(type, name, value)
+  def initialize(type, name, value, pointer_depth)
     @type = type
     @name = name
     @value = value
+    @pointer_depth = pointer_depth
   end
 
   def print(p)
     p.print('name', @name)
     p.print('type', @type)
     p.print('value', @value) if @value != nil
+    p.print('pointer_depth', @pointer_depth)
   end
 end
 
@@ -97,13 +105,15 @@ class StatementsRegion < Statement
 end
 
 class AssignmentStatement < Statement
-  def initialize(name, value)
+  def initialize(name, index_exprs, value)
     @name = name
+    @index_exprs = index_exprs
     @value = value
   end
 
   def print(p)
     p.print 'name', @name
+    p.print('pointer_indexes', @index_exprs) if @index_exprs != nil
     p.print 'value', @value
   end
 end
@@ -111,15 +121,18 @@ end
 class DeclarationStatement < Statement
   attr_reader :type
   attr_reader :name
+  attr_reader :pointer_depth
 
-  def initialize(type, name, value)
+  def initialize(type, name, value, pointer_depth)
     @type = type
     @name = name
     @value = value
+    @pointer_depth = pointer_depth
   end
 
   def print(p)
     p.print('type', @type)
+    p.print('pointer_depth', @pointer_depth)
     p.print('name', @name)
     p.print('value', @value) if @value != nil
   end

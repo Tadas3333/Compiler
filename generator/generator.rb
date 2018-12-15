@@ -8,10 +8,12 @@ require_relative 'nodes'
 class GenVariable
   attr_reader :type
   attr_reader :name
+  attr_reader :pointer_depth
 
-  def initialize(type, name)
+  def initialize(type, name, pointer_depth)
     @type = type
     @name = name
+    @pointer_depth
   end
 end
 
@@ -26,8 +28,8 @@ class GenFunction
     @variables = []
   end
 
-  def add_variable(type, name)
-    @variables << GenVariable.new(type, name)
+  def add_variable(type, name, pointer_depth)
+    @variables << GenVariable.new(type, name, pointer_depth)
   end
 
   def get_variable_adress(name)
@@ -37,6 +39,16 @@ class GenFunction
         return indx
       end
       indx += 1
+    end
+
+    raise "#{name} variable doesn't exist"
+  end
+
+  def get_variable_pointer_depth(name)
+    @variables.each do |var|
+      if var.name == name
+        return var.pointer_depth
+      end
     end
 
     raise "#{name} variable doesn't exist"
@@ -55,12 +67,14 @@ end
 
 class Generator
   attr_reader :code
+  attr_reader :strings
 
   def initialize
     @instructions = []
     @code = []
     @functions = []
     @whiles = []
+    @strings = []
 
     @current_function = 0
     @label_index = 0
@@ -70,7 +84,7 @@ class Generator
   #####################################################
   # Instructions
   def dump
-    code_indx = 0
+    code_indx = 1
     @instructions.each do |instr|
       print "#{code_indx}:#{instr.name} "
 
@@ -107,15 +121,21 @@ class Generator
   end
 
   def write_to_file(file_name)
-
+    @code = [@code.size+1] + @code # Append code size
+    packed_code = @code.pack("s" * @code.size) # 16bit signed integers
+    IO.binwrite(file_name, packed_code)
   end
 
-  def add_variable(type, name)
-    @functions.at(@current_function).add_variable(type, name)
+  def add_variable(type, name, pointer_depth)
+    @functions.at(@current_function).add_variable(type, name, pointer_depth)
   end
 
   def get_variable_adress(name)
     @functions.at(@current_function).get_variable_adress(name)
+  end
+
+  def get_variable_pointer_depth(name)
+    @functions.at(@current_function).get_variable_pointer_depth(name)
   end
 
   def set_current_function(name)
@@ -132,5 +152,17 @@ class Generator
 
   def generate_standart_libray
     StandartLibrary.new.generate(self)
+  end
+
+  def float_to_bin(float)
+    return [float].pack("f").unpack("i")[0]
+  end
+
+  def save_string(string)
+    unless @strings.include?(string)
+      @strings << string
+    end
+
+    return @strings.index(string)
   end
 end

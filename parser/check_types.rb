@@ -7,10 +7,12 @@ require_relative '../error'
 class Variable
   attr_reader :type
   attr_reader :name
+  attr_reader :pointer_depth
 
-  def initialize(type, name)
+  def initialize(type, name, pointer_depth)
     @type = type
     @name = name
+    @pointer_depth = pointer_depth
   end
 end
 
@@ -28,7 +30,7 @@ class TypesCheck
   end
 
   def add_variable(node)
-    @funcs.at(@current_func).variables.push(Variable.new(node.type, node.name))
+    @funcs.at(@current_func).variables.push(Variable.new(node.type, node.name, node.pointer_depth))
   end
 
   def get_var_type(token)
@@ -40,14 +42,49 @@ class TypesCheck
     raise "variable #{token.value} not found"
   end
 
+  def get_variable(name)
+    @funcs.at(@current_func).variables.each { |var|
+      if var.name.value == name
+        return var
+      end
+    }
+    raise "variable #{name} not found"
+  end
+
   def get_current_function_type
     @funcs.at(@current_func).ret_type
+  end
+
+  def get_current_function_pointer_depth
+    @funcs.at(@current_func).pointer_depth
+  end
+
+  def get_current_function_r_any_pointer
+    @funcs.at(@current_func).r_any_pointer
+  end
+
+  def get_function_r_any_pointer(name)
+    @funcs.each { |func|
+      if func.name.value == name
+        return func.r_any_pointer
+      end
+    }
+    raise "function #{name} not found"
   end
 
   def get_call_type(node) # Call Expression
     @funcs.each { |func|
       if func.name.value == node.name.value
         return Token.new(func.ret_type, '', node.name.file_name, node.name.line)
+      end
+    }
+    raise "function #{node.name.value} not found"
+  end
+
+  def get_call_pointer_depth(node) # Call Expression
+    @funcs.each { |func|
+      if func.name.value == node.name.value
+        return func.pointer_depth
       end
     }
     raise "function #{node.name.value} not found"
@@ -71,7 +108,13 @@ class TypesCheck
     indx = 0
     func.params.params.each { |param|
       cl_expr_tkn = call.arguments.at(indx).get_expr_type(self)
-      types_match?(param.type, cl_expr_tkn.name, cl_expr_tkn)
+      if types_match?(param.type, cl_expr_tkn.name, cl_expr_tkn)
+        if is_pointer_type?(param.type)
+          if func.pointer_depth != call.arguments.at(indx).get_pointer_depth(self)
+            NoExitError.new("function #{func.name.value} call argument pointer depth mismatch", Status.new(call.name.file_name, call.name.line))
+          end
+        end
+      end
       indx += 1
     }
   end
@@ -83,6 +126,14 @@ class TypesCheck
     end
 
     true
+  end
+
+  def is_pointer_type?(type)
+    if type == :INT_POINTER || type == :FLOAT_POINTER || type == :BOOL_POINTER || type == :STRING_POINTER
+      return true
+    end
+
+    false
   end
 end
 
@@ -104,16 +155,18 @@ class Program < Node
     df = StandartLibrary.new
     df.functions.each { |key, info_hash|
       r_type = info_hash.fetch('type')
+      r_pointer_depth = info_hash.fetch('r_pointer_depth')
       params = info_hash.fetch('params')
+      r_any_pointer = info_hash.fetch('r_any_pointer')
 
       indx = 0
       params_class = Parameters.new
       params.each { |pr|
-        params_class.add_parameter(Parameter.new(pr, Token.new(:IDENT, indx, "StandartLibrary", 0), nil))
+        params_class.add_parameter(Parameter.new(pr, Token.new(:IDENT, indx, "StandartLibrary", 0), nil, 0))
         indx += 1
       }
 
-      funcdef = FunctionDefinition.new(Token.new(:IDENT, key, "StandartLibrary", 0), params_class, r_type, nil)
+      funcdef = FunctionDefinition.new(Token.new(:IDENT, key, "StandartLibrary", 0), params_class, r_type, r_pointer_depth, nil, r_any_pointer)
       fna.add_function(funcdef)
 
       funcdef.params.params.each { |pr|
@@ -175,7 +228,45 @@ end
 class AssignmentStatement < Statement
   def check_types(fna)
     @value.check_types(fna)
-    fna.types_match?(fna.get_var_type(@name).name, @value.get_expr_type(fna).name, @name)
+    var_type = fna.get_var_type(@name).name
+    variable = fna.get_variable(@name.value)
+    pointing_depth = 0
+
+    if @index_exprs != nil
+      @index_exprs.each do |expr|
+        expr.check_types(fna)
+        fna.types_match?(:LIT_INT, expr.get_expr_type(fna).name, @name)
+      end
+
+      if @index_exprs.size > variable.pointer_depth
+        NoExitError.new("#{variable.name.value} pointer depth is too big", Status.new(@name.file_name, @name.line))
+      end
+
+      pointing_depth = variable.pointer_depth-@index_exprs.size
+
+      if pointing_depth == 0
+        case var_type
+        when :INT_POINTER; var_type = :LIT_INT;
+        when :FLOAT_POINTER; var_type = :LIT_FLOAT;
+        when :BOOL_POINTER; var_type = :BOOL;
+        when :STRING_POINTER; var_type = :LIT_STR;
+        else raise 'unknown pointer type'
+        end
+      end
+    elsif fna.is_pointer_type?(var_type)
+      pointing_depth = variable.pointer_depth
+    end
+
+    if fna.is_pointer_type?(var_type) && @value.get_r_any_pointer(fna)
+      return
+    end
+
+    if fna.types_match?(var_type, @value.get_expr_type(fna).name, @name)
+      value_pointer_depth = @value.get_pointer_depth(fna)
+      if pointing_depth != value_pointer_depth
+        NoExitError.new("#{variable.name.value} - #{pointing_depth} and #{value_pointer_depth} pointer depths mismatch", Status.new(@name.file_name, @name.line))
+      end
+    end
   end
 end
 
@@ -184,7 +275,13 @@ class DeclarationStatement < Statement
     fna.add_variable(self)
     return if @value == nil
     @value.check_types(fna)
-    fna.types_match?(@type, @value.get_expr_type(fna).name, @name)
+
+    if fna.types_match?(@type, @value.get_expr_type(fna).name, @name)
+      value_pointer_depth = @value.get_pointer_depth(fna)
+      if @pointer_depth != value_pointer_depth
+        NoExitError.new("#{@name.value} - #{@pointer_depth} and #{value_pointer_depth} pointer depths mismatch", Status.new(@name.file_name, @name.line))
+      end
+    end
   end
 end
 
@@ -238,13 +335,24 @@ end
 
 class ReturnStatement < Statement
   def check_types(fna)
+    if fna.is_pointer_type?(fna.get_current_function_type) && fna.get_current_function_r_any_pointer
+      return
+    end
+
     ret_type = :VOID
 
     if @expr != nil
       ret_type = @expr.get_expr_type(fna).name
     end
 
-    fna.types_match?(ret_type, fna.get_current_function_type, @token)
+    if fna.types_match?(ret_type, fna.get_current_function_type, @token)
+      if fna.is_pointer_type?(ret_type)
+        pr_tkn = @expr.get_expr_type(fna)
+        if @expr.get_pointer_depth(fna) != fna.get_current_function_pointer_depth
+          NoExitError.new("function return pointer depths do not match", Status.new(pr_tkn.file_name, pr_tkn.line))
+        end
+      end
+    end
   end
 end
 
@@ -266,21 +374,25 @@ class BinaryExpression < Expression
   def check_types(fna)
     @left.check_types(fna)
     @right.check_types(fna)
-    left_tkn = @left.get_expr_type(fna)
-    fna.types_match?(left_tkn.name, @right.get_expr_type(fna).name, left_tkn)
+    @expr_type = @left.get_expr_type(fna)
+    fna.types_match?(@expr_type.name, @right.get_expr_type(fna).name, @expr_type)
 
     user_friendly_operators = []
 
-    if left_tkn.name == :LIT_STR
-      NoExitError.new("#{user_friendly_operator(@operator)} operation with #{left_tkn.name}", Status.new(left_tkn.file_name, left_tkn.line))
+    if @expr_type.name == :LIT_STR
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with #{@expr_type.name}", Status.new(@expr_type.file_name, @expr_type.line))
     end
 
-    if left_tkn.name == :BOOL && @operator != :OP_DAND && @operator != :OP_DOR
-      NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(left_tkn.file_name, left_tkn.line))
+    if @expr_type.name == :BOOL && @operator != :OP_DAND && @operator != :OP_DOR
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(@expr_type.file_name, @expr_type.line))
     end
 
-    if left_tkn.name == :VOID
-      NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(left_tkn.file_name, left_tkn.line))
+    if @expr_type.name == :VOID
+      NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(@expr_type.file_name, @expr_type.line))
+    end
+
+    if @expr_type.name == :INT_POINTER || @expr_type.name == :FLOAT_POINTER || @expr_type.name == :BOOL_POINTER || @expr_type.name == :STRING_POINTER
+        NoExitError.new("#{user_friendly_operator(@operator)} operation with a pointer", Status.new(@expr_type.file_name, @expr_type.line))
     end
   end
 
@@ -292,6 +404,14 @@ class BinaryExpression < Expression
     end
 
     @left.get_expr_type(fna)
+  end
+
+  def get_pointer_depth(fna)
+    @left.get_pointer_depth(fna)
+  end
+
+  def get_r_any_pointer(fna)
+    @left.get_r_any_pointer(fna)
   end
 end
 
@@ -308,6 +428,7 @@ class UnaryExpression < Expression
       when :LIT_FLOAT;NoExitError.new("#{user_friendly_operator(@operator)} operation with float", Status.new(l_tkn.file_name, l_tkn.line))
       when :VOID;NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(l_tkn.file_name, l_tkn.line))
       when :LIT_STR;NoExitError.new("#{user_friendly_operator(@operator)} operation with string", Status.new(l_tkn.file_name, l_tkn.line))
+      when :INT_POINTER, :FLOAT_POINTER, :BOOL_POINTER, :STRING_POINTER;NoExitError.new("#{user_friendly_operator(@operator)} operation with a pointer", Status.new(l_tkn.file_name, l_tkn.line))
       else;
       end
     when :OP_MINUS
@@ -315,6 +436,7 @@ class UnaryExpression < Expression
       when :BOOL;NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(l_tkn.file_name, l_tkn.line))
       when :VOID;NoExitError.new("#{user_friendly_operator(@operator)} operation with void", Status.new(l_tkn.file_name, l_tkn.line))
       when :LIT_STR;NoExitError.new("#{user_friendly_operator(@operator)} operation with string", Status.new(l_tkn.file_name, l_tkn.line))
+      when :INT_POINTER, :FLOAT_POINTER, :BOOL_POINTER, :STRING_POINTER;NoExitError.new("#{user_friendly_operator(@operator)} operation with a pointer", Status.new(l_tkn.file_name, l_tkn.line))
       else;
       end
     else; raise "unknown operator #{operator}"
@@ -323,6 +445,14 @@ class UnaryExpression < Expression
 
   def get_expr_type(fna)
     @factor.get_expr_type(fna)
+  end
+
+  def get_pointer_depth(fna)
+    @factor.get_pointer_depth(fna)
+  end
+
+  def get_r_any_pointer(fna)
+    @factor.get_r_any_pointer(fna)
   end
 end
 
@@ -338,6 +468,14 @@ class CallExpression < Expression
   def get_expr_type(fna)
     return fna.get_call_type(self)
   end
+
+  def get_pointer_depth(fna)
+    return fna.get_call_pointer_depth(self)
+  end
+
+  def get_r_any_pointer(fna)
+    fna.get_function_r_any_pointer(@name.value)
+  end
 end
 
 class ConstIntExpression < Expression
@@ -346,6 +484,14 @@ class ConstIntExpression < Expression
 
   def get_expr_type(fna)
     @tkn
+  end
+
+  def get_pointer_depth(fna)
+    return 0
+  end
+
+  def get_r_any_pointer(fna)
+    false
   end
 end
 
@@ -356,6 +502,14 @@ class ConstStringExpression < Expression
   def get_expr_type(fna)
     @tkn
   end
+
+  def get_pointer_depth(fna)
+    return 0
+  end
+
+  def get_r_any_pointer(fna)
+    false
+  end
 end
 
 class ConstFloatExpression < Expression
@@ -364,6 +518,14 @@ class ConstFloatExpression < Expression
 
   def get_expr_type(fna)
     @tkn
+  end
+
+  def get_pointer_depth(fna)
+    return 0
+  end
+
+  def get_r_any_pointer(fna)
+    false
   end
 end
 
@@ -374,6 +536,60 @@ class ConstBoolExpression < Expression
   def get_expr_type(fna)
     @tkn
   end
+
+  def get_pointer_depth(fna)
+    return 0
+  end
+
+  def get_r_any_pointer(fna)
+    false
+  end
+end
+
+class PointerExpression < Expression
+  def check_types(fna)
+    @index_exprs.each do |expr|
+      expr.check_types(fna)
+      fna.types_match?(:LIT_INT, expr.get_expr_type(fna).name, @name)
+    end
+
+    variable = fna.get_variable(@name.value)
+    if @index_exprs.size > variable.pointer_depth
+      NoExitError.new("#{variable.name.value} pointer depth is too big", Status.new(@name.file_name, @name.line))
+    end
+  end
+
+  def get_expr_type(fna)
+    tkn = fna.get_var_type(@name)
+    depth = fna.get_variable(@name.value).pointer_depth
+    depth -= @index_exprs.size
+
+    if depth == 0
+      case tkn.name
+      when :INT_POINTER; tkn.name = :LIT_INT; return tkn;
+      when :FLOAT_POINTER; tkn.name = :LIT_FLOAT; return tkn;
+      when :BOOL_POINTER; tkn.name = :BOOL; return tkn;
+      when :STRING_POINTER; tkn.name = :LIT_STR; return tkn;
+      else raise 'unknown pointer type'
+      end
+    else
+      return tkn
+    end
+  end
+
+  def get_pointer_depth(fna)
+    depth = fna.get_variable(@name.value).pointer_depth
+
+    if @index_exprs != nil
+      depth -= @index_exprs.size
+    end
+
+    return depth
+  end
+
+  def get_r_any_pointer(fna)
+    false
+  end
 end
 
 class VarExpression < Expression
@@ -382,5 +598,13 @@ class VarExpression < Expression
 
   def get_expr_type(fna)
     return fna.get_var_type(@tkn)
+  end
+
+  def get_pointer_depth(fna)
+    return fna.get_variable(@tkn.value).pointer_depth
+  end
+
+  def get_r_any_pointer(fna)
+    false
   end
 end

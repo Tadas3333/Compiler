@@ -82,6 +82,8 @@ class Parser
     when :IDENT
       if peek == :OP_PAREN_O
         return parse_function_call
+      elsif peek == :OP_SQBR_O
+        return parse_pointer
       else
         tkn = expect(:IDENT)
         return VarExpression.new(tkn)
@@ -113,6 +115,20 @@ class Parser
 
     next_token
     return CallExpression.new(s_ident, arguments)
+  end
+
+  def parse_pointer
+    s_ident = expect(:IDENT)
+
+    index_exprs = []
+
+    while @cur_token.name == :OP_SQBR_O
+      expect(:OP_SQBR_O)
+      index_exprs << parse_expression
+      expect(:OP_SQBR_C)
+    end
+
+    return PointerExpression.new(s_ident, index_exprs);
   end
 
   def parse_constant

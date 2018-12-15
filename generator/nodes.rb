@@ -27,8 +27,18 @@ class FunctionDefinition < Definition
     @params.generate(gen)
     @body.generate(gen)
 
+    # Add returns in case function ended and no return was called
     if @ret_type == :VOID
       gen.write(:RET)
+    elsif @ret_type == :STRING
+      gen.write(:PUSH_I, "")
+      gen.write(:RET_V)
+    elsif @ret_type == :LIT_FLOAT
+      gen.write(:PUSH_F, gen.float_to_bin(0.0))
+      gen.write(:RET_V)
+    else
+      gen.write(:PUSH_I, 0)
+      gen.write(:RET_V)
     end
   end
 end
@@ -43,7 +53,7 @@ end
 
 class Parameter < Node
   def generate(gen)
-    gen.add_variable(@type, @name.value)
+    gen.add_variable(@type, @name.value, 0)
   end
 end
 
@@ -59,14 +69,23 @@ class AssignmentStatement < Statement
   def generate(gen)
     @value.generate(gen)
     adr = gen.get_variable_adress(@name.value)
-    gen.write(:POKE, adr)
+
+    if @index_exprs != nil
+      @index_exprs.reverse.each do |expr|
+        expr.generate(gen)
+      end
+      gen.write(:PUSH_I, @index_exprs.size)
+      gen.write(:POKE_P, adr)
+    else
+      gen.write(:POKE, adr)
+    end
   end
 end
 
 class DeclarationStatement < Statement
   def generate(gen)
     gen.write(:PUSH_I, 0)
-    gen.add_variable(@type, @name.value)
+    gen.add_variable(@type, @name.value, @pointer_depth)
 
     if @value != nil
       @value.generate(gen)
@@ -219,13 +238,14 @@ end
 
 class ConstStringExpression < Expression
   def generate(gen)
-    gen.write(:PUSH_I, @tkn.value)
+    indx = gen.save_string(@tkn.value)
+    gen.write(:PUSH_I, indx)
   end
 end
 
 class ConstFloatExpression < Expression
   def generate(gen)
-    gen.write(:PUSH_I, @tkn.value)
+    gen.write(:PUSH_F, gen.float_to_bin(@tkn.value))
   end
 end
 
@@ -236,6 +256,17 @@ class ConstBoolExpression < Expression
     when 'false'; gen.write(:PUSH_I, 0)
     else; raise "unknown bool value #{@tkn.value}"
     end
+  end
+end
+
+class PointerExpression < Expression
+  def generate(gen)
+    @index_exprs.reverse.each do |expr|
+      expr.generate(gen)
+    end
+
+    gen.write(:PUSH_I, @index_exprs.size)
+    gen.write(:PEEK_P, gen.get_variable_adress(@name.value))
   end
 end
 

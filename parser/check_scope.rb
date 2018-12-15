@@ -90,6 +90,12 @@ class AssignmentStatement < Statement
   def check_scope(parent)
     undeclared_var(@name) unless parent.declared?(@name)
     @value.check_scope(parent)
+
+    if @index_exprs != nil
+      @index_exprs.each do |expr|
+        expr.check_scope(parent)
+      end
+    end
   end
 end
 
@@ -186,6 +192,18 @@ end
 
 class ConstBoolExpression < Expression
   def check_scope(parent)
+  end
+end
+
+class PointerExpression < Expression
+  def check_scope(parent)
+    undeclared_var(@name) unless parent.declared?(@name)
+
+    if @index_exprs != nil
+      @index_exprs.each do |expr|
+        expr.check_scope(parent)
+      end
+    end
   end
 end
 

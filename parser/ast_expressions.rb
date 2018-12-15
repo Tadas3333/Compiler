@@ -93,6 +93,17 @@ class ConstBoolExpression < Expression
   end
 end
 
+class PointerExpression < Expression
+  def initialize(ident, index_exprs)
+    @name = ident
+    @index_exprs = index_exprs
+  end
+
+  def print(p)
+    p.print('indexes', @index_exprs)
+  end
+end
+
 class VarExpression < Expression
   attr_reader :tkn
 

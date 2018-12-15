@@ -152,7 +152,42 @@ class ReturnStatement < Statement
   end
 end
 
+class BinaryExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class UnaryExpression < Expression
+  def check_structure(ss)
+  end
+end
+
 class CallExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class ConstIntExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class ConstStringExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class ConstFloatExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class ConstBoolExpression < Expression
+  def check_structure(ss)
+  end
+end
+
+class VarExpression < Expression
   def check_structure(ss)
   end
 end
