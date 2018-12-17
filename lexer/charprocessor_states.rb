@@ -25,6 +25,7 @@ class CharProcessor
     when ';'; complete(:S_SCOL, nil)
     when '@'; complete(:S_AT, nil)
     when '$'; complete(:S_DOL, nil)
+    when '#'; complete(:S_HASH, nil)
     when '('; complete(:OP_PAREN_O, nil)
     when ')'; complete(:OP_PAREN_C, nil)
     when '['; complete(:OP_SQBR_O, nil)
@@ -183,6 +184,8 @@ class CharProcessor
       @buffer += "\n"
     when 'r'
       @buffer += "\r"
+    when 'e'
+      @buffer += "\e"
     when "\\", "'", "\""
       @buffer += @cur_char
     else

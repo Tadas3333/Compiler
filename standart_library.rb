@@ -16,6 +16,7 @@ class StandartLibrary
     add_definition(:VOID, 0, 'clear', [])
     add_definition(:BOOL, 0, 'left_key', [])
     add_definition(:BOOL, 0, 'right_key', [])
+    add_definition(:VOID, 0, 'set_color', [:LIT_INT])
   end
 
   def add_definition(return_type, r_pointer_depth, name, params, r_any_pointer = false)
@@ -33,6 +34,7 @@ class StandartLibrary
     generate_clear(gen)
     generate_left_key(gen)
     generate_right_key(gen)
+    generate_set_color(gen)
   end
 
   def generate_print(gen)
@@ -124,5 +126,14 @@ class StandartLibrary
 
     gen.write(:RIGHT_KEY)
     gen.write(:RET_V)
+  end
+
+  def generate_set_color(gen)
+    gen.label_function('set_color')
+    gen.set_current_function('set_color')
+    gen.add_variable(:LIT_INT, '0', 0)
+
+    gen.write(:SETCOLOR)
+    gen.write(:RET)
   end
 end

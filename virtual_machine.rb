@@ -2,25 +2,14 @@
 class TrueClass; def to_i; 1; end; end
 class FalseClass; def to_i; 0; end; end
 
-
-class Keys
-  attr_accessor :left_key
-  attr_accessor :right_key
-
-  def initialize
-    @left_key = false
-    @right_key = false
-  end
-end
-
 class VirtualMachine
   def initialize
     @code_base = 2000
-    @memory = Array.new(8000, 0)
+    @memory = Array.new(20000, 0)
     @ip = @code_base
-    @sp = 4000
+    @sp = 8000
     @fp = 0
-    @pp = 6000
+    @pp = 14000
     @rp = 0
   end
 
@@ -29,59 +18,40 @@ class VirtualMachine
     @strings = strings
     @memory[@ip, code.size] = code
 
-    keys = Keys.new
-    keys_thread = Thread.new do
-      system("stty raw -echo")
-      char = STDIN.getc
-      system("stty -raw echo")
-
-      if char == 'a'
-        @keys.left_key = true
-        @keys.right_key = false
-      elsif char == 'd'
-        @keys.left_key = false
-        @keys.right_key = true
-      else
-        @keys.left_key = false
-        @keys.right_key = false
-      end
-    end
-
-
     loop do
       opcode = @memory[@ip]
       case opcode
-      when 0x0; b = pop; a = pop; push(a+b);
-      when 0x1; b = pop; a = pop; push(a*b);
-      when 0x2; b = pop; a = pop; push(a-b);
-      when 0x3; b = pop; a = pop; push(a/b);
-      when 0x4; b = pop; a = pop; push(a%b);
-      when 0x5; push(!pop);
-      when 0x6; push(-pop);
-      when 0x7; adress = load_operand; push(@memory[@fp+adress]);
-      when 0x8; adress = load_operand; value = pop;  @memory[@fp+adress] = value;
-      when 0x9; pop;
-      when 0x10; value = load_operand; push(value);
-      when 0x11; value = load_operand; push_f(value);
-      when 0x12; call_function;
-      when 0x13; adress = load_operand; @ip = @code_base+adress-1;
-      when 0x14
+      when 100; b = pop; a = pop; push(a+b);
+      when 200; b = pop; a = pop; push(a*b);
+      when 300; b = pop; a = pop; push(a-b);
+      when 400; b = pop; a = pop; push(a/b);
+      when 500; b = pop; a = pop; push(a%b);
+      when 600; push(!pop);
+      when 700; push(-pop);
+      when 800; adress = load_operand; push(@memory[@fp+adress]);
+      when 900; adress = load_operand; value = pop;  @memory[@fp+adress] = value;
+      when 1000; pop;
+      when 1100; value = load_operand; push(value);
+      when 1200; value = load_operand; push_f(value);
+      when 1300; call_function;
+      when 1400; adress = load_operand; @ip = @code_base+adress-1;
+      when 1500
         adress = load_operand
         value = pop
         if value == 0
           @ip = @code_base+adress-1
         end
-      when 0x15; return_back
-      when 0x16; value = pop; return_back(value)
-      when 0x17; b = pop; a = pop; push((a == b).to_i);
-      when 0x18; b = pop; a = pop; push((a >= b).to_i);
-      when 0x19; b = pop; a = pop; push((a <= b).to_i);
-      when 0x20; b = pop; a = pop; push((a != b).to_i);
-      when 0x21; b = pop; a = pop; push((a > b).to_i);
-      when 0x22; b = pop; a = pop; push((a < b).to_i);
-      when 0x23; b = pop; a = pop; push((a && b).to_i);
-      when 0x24; b = pop; a = pop; push((a || b).to_i);
-      when 0x25
+      when 1600; return_back
+      when 1700; value = pop; return_back(value)
+      when 1800; b = pop; a = pop; push((a == b).to_i);
+      when 1900; b = pop; a = pop; push((a >= b).to_i);
+      when 2000; b = pop; a = pop; push((a <= b).to_i);
+      when 2100; b = pop; a = pop; push((a != b).to_i);
+      when 2200; b = pop; a = pop; push((a > b).to_i);
+      when 2300; b = pop; a = pop; push((a < b).to_i);
+      when 2400; b = pop; a = pop; push((a && b).to_i);
+      when 2500; b = pop; a = pop; push((a || b).to_i);
+      when 2600
          value = pop;
 
          unless value.is_a?(String)
@@ -90,39 +60,43 @@ class VirtualMachine
 
          print "#{value}"
 
-      when 0x26; input = STDIN.gets; push(input)
-      when 0x27; value = pop; push(value.to_s)
-      when 0x28; value = pop; push(value.to_i)
-      when 0x29; value = pop; push(value.to_s);
-      when 0x30; break;
-      when 0x31; peek_p;
-      when 0x32; poke_p;
-      when 0x33; size = pop; push(allocate_memory(size));
-      when 0x34; indx = load_operand; sleep((@memory[@fp+indx].to_f)/1000);
-      when 0x35; system "cls";
-      when 0x36
-        if keys.left_key
+      when 2700; input = STDIN.gets; push(input)
+      when 2800; value = pop; push(value.to_s)
+      when 2900; value = pop; push(value.to_i)
+      when 3000; value = pop; push(value.to_s);
+      when 3100; break;
+      when 3200; peek_p;
+      when 3300; poke_p;
+      when 3400; size = pop; push(allocate_memory(size));
+      when 3500; indx = load_operand; sleep((@memory[@fp+indx].to_f)/1000);
+      when 3600; system "cls";
+      when 3700
+        if File.read("keys.txt") == '1'
           push(1)
         else
           push(0)
         end
-      when 0x37
-        if keys.right_key
+      when 3800
+        if File.read("keys.txt") == '2'
           push(1)
         else
           push(0)
+        end
+      when 3900
+        value = pop
+        case value
+        when 1; print "\e[37m"
+        when 2; print "\e[31m"
+        when 3; print "\e[34m"
+        when 4; print "\e[32m"
+        else; print "\e[0m"
         end
       else; raise "unknown instruction #{opcode}"
       end
 
       @ip += 1
     end
-    keys_thread.exit
   end
-
-  def read_char
-        Win32API.new("crtdll", "_getch", [], "L").Call
-    end
 
   def read_code(file)
     read_info = IO.binread(file)
@@ -205,7 +179,9 @@ class VirtualMachine
 
       indexes -= 1
     end
-
+    if pointer < 0
+      raise "negative pointer #{pointer}"
+    end
     push(@memory[pointer])
   end
 
@@ -228,6 +204,10 @@ class VirtualMachine
       indexes -= 1
     end
 
+    if pointer < 0
+      raise "negative pointer #{pointer}"
+    end
+
     value = pop
     @memory[pointer] = value
   end
@@ -236,7 +216,7 @@ class VirtualMachine
     @memory[@sp] = value
     @sp += 1
 
-    if @sp >= 6000
+    if @sp >= 14000
       raise 'stack overflow'
     end
   end
