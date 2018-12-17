@@ -1,5 +1,6 @@
 require_relative 'ast_statements'
 require_relative 'ast_expressions'
+require_relative 'parser'
 require_relative '../standart_library'
 require_relative '../status'
 require_relative '../error'
@@ -110,8 +111,8 @@ class TypesCheck
       cl_expr_tkn = call.arguments.at(indx).get_expr_type(self)
       if types_match?(param.type, cl_expr_tkn.name, cl_expr_tkn)
         if is_pointer_type?(param.type)
-          if func.pointer_depth != call.arguments.at(indx).get_pointer_depth(self)
-            NoExitError.new("function #{func.name.value} call argument pointer depth mismatch", Status.new(call.name.file_name, call.name.line))
+          if param.pointer_depth != call.arguments.at(indx).get_pointer_depth(self)
+            NoExitError.new("function #{func.name.value} call argument pointer depth mismatch (#{func.pointer_depth} and #{call.arguments.at(indx).get_pointer_depth(self)})", Status.new(call.name.file_name, call.name.line))
           end
         end
       end
@@ -126,14 +127,6 @@ class TypesCheck
     end
 
     true
-  end
-
-  def is_pointer_type?(type)
-    if type == :INT_POINTER || type == :FLOAT_POINTER || type == :BOOL_POINTER || type == :STRING_POINTER
-      return true
-    end
-
-    false
   end
 end
 
@@ -253,11 +246,11 @@ class AssignmentStatement < Statement
         else raise 'unknown pointer type'
         end
       end
-    elsif fna.is_pointer_type?(var_type)
+    elsif is_pointer_type?(var_type)
       pointing_depth = variable.pointer_depth
     end
 
-    if fna.is_pointer_type?(var_type) && @value.get_r_any_pointer(fna)
+    if is_pointer_type?(var_type) && @value.get_r_any_pointer(fna)
       return
     end
 
@@ -275,6 +268,10 @@ class DeclarationStatement < Statement
     fna.add_variable(self)
     return if @value == nil
     @value.check_types(fna)
+
+    if is_pointer_type?(@type) && @value.get_r_any_pointer(fna)
+      return
+    end
 
     if fna.types_match?(@type, @value.get_expr_type(fna).name, @name)
       value_pointer_depth = @value.get_pointer_depth(fna)
@@ -335,7 +332,7 @@ end
 
 class ReturnStatement < Statement
   def check_types(fna)
-    if fna.is_pointer_type?(fna.get_current_function_type) && fna.get_current_function_r_any_pointer
+    if is_pointer_type?(fna.get_current_function_type) && fna.get_current_function_r_any_pointer
       return
     end
 
@@ -346,7 +343,7 @@ class ReturnStatement < Statement
     end
 
     if fna.types_match?(ret_type, fna.get_current_function_type, @token)
-      if fna.is_pointer_type?(ret_type)
+      if is_pointer_type?(ret_type)
         pr_tkn = @expr.get_expr_type(fna)
         if @expr.get_pointer_depth(fna) != fna.get_current_function_pointer_depth
           NoExitError.new("function return pointer depths do not match", Status.new(pr_tkn.file_name, pr_tkn.line))
@@ -383,7 +380,7 @@ class BinaryExpression < Expression
       NoExitError.new("#{user_friendly_operator(@operator)} operation with #{@expr_type.name}", Status.new(@expr_type.file_name, @expr_type.line))
     end
 
-    if @expr_type.name == :BOOL && @operator != :OP_DAND && @operator != :OP_DOR
+    if @expr_type.name == :BOOL && @operator != :OP_DAND && @operator != :OP_DOR && @operator != :OP_DE
       NoExitError.new("#{user_friendly_operator(@operator)} operation with bool", Status.new(@expr_type.file_name, @expr_type.line))
     end
 

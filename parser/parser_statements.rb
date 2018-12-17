@@ -9,6 +9,17 @@ class Parser
       next_token
     end
 
+    if f_pointer_depth > 0
+      case f_type
+      when :LIT_INT; f_type= :INT_POINTER;
+      when :LIT_FLOAT; f_type = :FLOAT_POINTER;
+      when :BOOL; f_type = :BOOL_POINTER;
+      when :LIT_STR; f_type = :STRING_POINTER;
+      else
+        token_error('void pointer')
+      end
+    end
+
     f_ident = expect(:IDENT)
     params = Parameters.new
 
@@ -21,6 +32,17 @@ class Parser
       while @cur_token.name == :OP_MULTIPLY
         pointer_depth += 1
         next_token
+      end
+
+      if pointer_depth > 0
+        case p_type
+        when :LIT_INT; p_type = :INT_POINTER;
+        when :LIT_FLOAT; p_type = :FLOAT_POINTER;
+        when :BOOL; p_type = :BOOL_POINTER;
+        when :LIT_STR; p_type = :STRING_POINTER;
+        else
+          token_error('void pointer')
+        end
       end
 
       p_ident = expect(:IDENT)
@@ -43,6 +65,17 @@ class Parser
       while @cur_token.name == :OP_MULTIPLY
         pointer_depth += 1
         next_token
+      end
+
+      if pointer_depth > 0
+        case p_type
+        when :LIT_INT; p_type = :INT_POINTER;
+        when :LIT_FLOAT; p_type = :FLOAT_POINTER;
+        when :BOOL; p_type = :BOOL_POINTER;
+        when :LIT_STR; p_type = :STRING_POINTER;
+        else
+          token_error('void pointer')
+        end
       end
 
       p_ident = expect(:IDENT)

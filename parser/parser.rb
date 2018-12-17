@@ -79,3 +79,11 @@ class Parser
     end
   end
 end
+
+def is_pointer_type?(type)
+  if type == :INT_POINTER || type == :FLOAT_POINTER || type == :BOOL_POINTER || type == :STRING_POINTER
+    return true
+  end
+
+  false
+end

@@ -2,6 +2,17 @@
 class TrueClass; def to_i; 1; end; end
 class FalseClass; def to_i; 0; end; end
 
+
+class Keys
+  attr_accessor :left_key
+  attr_accessor :right_key
+
+  def initialize
+    @left_key = false
+    @right_key = false
+  end
+end
+
 class VirtualMachine
   def initialize
     @code_base = 2000
@@ -17,6 +28,26 @@ class VirtualMachine
     code = read_code(file)
     @strings = strings
     @memory[@ip, code.size] = code
+
+    keys = Keys.new
+    keys_thread = Thread.new do
+      system("stty raw -echo")
+      char = STDIN.getc
+      system("stty -raw echo")
+
+      if char == 'a'
+        @keys.left_key = true
+        @keys.right_key = false
+      elsif char == 'd'
+        @keys.left_key = false
+        @keys.right_key = true
+      else
+        @keys.left_key = false
+        @keys.right_key = false
+      end
+    end
+
+
     loop do
       opcode = @memory[@ip]
       case opcode
@@ -67,12 +98,31 @@ class VirtualMachine
       when 0x31; peek_p;
       when 0x32; poke_p;
       when 0x33; size = pop; push(allocate_memory(size));
+      when 0x34; indx = load_operand; sleep((@memory[@fp+indx].to_f)/1000);
+      when 0x35; system "cls";
+      when 0x36
+        if keys.left_key
+          push(1)
+        else
+          push(0)
+        end
+      when 0x37
+        if keys.right_key
+          push(1)
+        else
+          push(0)
+        end
       else; raise "unknown instruction #{opcode}"
       end
 
       @ip += 1
     end
+    keys_thread.exit
   end
+
+  def read_char
+        Win32API.new("crtdll", "_getch", [], "L").Call
+    end
 
   def read_code(file)
     read_info = IO.binread(file)
@@ -130,7 +180,7 @@ class VirtualMachine
 
     indx = 0
     while indx < size do
-      push_p(-1)
+      push_p(0)
       indx += 1
     end
 
@@ -186,7 +236,7 @@ class VirtualMachine
     @memory[@sp] = value
     @sp += 1
 
-    if @sp >= @pp
+    if @sp >= 6000
       raise 'stack overflow'
     end
   end

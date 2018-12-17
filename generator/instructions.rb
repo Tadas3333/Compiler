@@ -39,6 +39,10 @@ class Instructions
     when :PEEK_P; return Instruction.new(name, 0x31, 1)
     when :POKE_P; return Instruction.new(name, 0x32, 1)
     when :ALLOC; return Instruction.new(name, 0x33, 0)
+    when :SLEEP; return Instruction.new(name, 0x34, 1)
+    when :CLEAR; return Instruction.new(name, 0x35, 0)
+    when :LEFT_KEY; return Instruction.new(name, 0x36, 0)
+    when :RIGHT_KEY; return Instruction.new(name, 0x37, 0)
     else; raise "#{name} instruction not implemented"
     end
   end
