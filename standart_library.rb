@@ -6,21 +6,25 @@ class StandartLibrary
   def initialize
     @functions = {}
 
-    add_definition(:VOID, 0, 'print', [:LIT_STR])
-    add_definition(:LIT_STR, 0, 'get_input', [])
-    add_definition(:LIT_STR, 0, 'int_to_string', [:LIT_INT])
-    add_definition(:LIT_INT, 0, 'string_to_int', [:LIT_STR])
-    add_definition(:LIT_STR, 0, 'float_to_string', [:LIT_FLOAT])
-    add_definition(:INT_POINTER, 1, 'allocate', [:LIT_INT], true)
-    add_definition(:VOID, 0, 'sleep', [:LIT_INT])
-    add_definition(:VOID, 0, 'clear', [])
-    add_definition(:BOOL, 0, 'left_key', [])
-    add_definition(:BOOL, 0, 'right_key', [])
-    add_definition(:VOID, 0, 'set_color', [:LIT_INT])
+    add_definition('void', 'print', ['string'])
+    add_definition('string', 'get_input', [])
+    add_definition('string', 'int_to_string', ['int'])
+    add_definition('int', 'string_to_int', ['string'])
+    add_definition('string', 'float_to_string', ['float'])
+    add_definition('pointer', 'allocate', ['int'], true)
+    add_definition('void', 'sleep', ['int'])
+    add_definition('void', 'clear', [])
+    add_definition('bool', 'left_key', [])
+    add_definition('bool', 'right_key', [])
+    add_definition('void', 'set_color', ['int'])
+    add_definition('bool', 'r_key', [])
+    add_definition('string', 'ascii_to_char', ['int'])
+    add_definition('void', 'rblc', ['string'])
+    add_definition('void', 'bblc', ['string'])
   end
 
-  def add_definition(return_type, r_pointer_depth, name, params, r_any_pointer = false)
-    @functions[name] = {'type' => return_type, 'r_pointer_depth' => r_pointer_depth, 'params' => params, 'r_any_pointer' => r_any_pointer}
+  def add_definition(return_type, name, params, r_any_pointer = false)
+    @functions[name] = {'type' => return_type, 'params' => params, 'r_any_pointer' => r_any_pointer}
   end
 
   def generate(gen)
@@ -35,12 +39,16 @@ class StandartLibrary
     generate_left_key(gen)
     generate_right_key(gen)
     generate_set_color(gen)
+    generate_r_key(gen)
+    generate_ascii_to_char(gen)
+    generate_rblc(gen)
+    generate_bblc(gen)
   end
 
   def generate_print(gen)
     gen.label_function('print')
     gen.set_current_function('print')
-    gen.add_variable(:LIT_STR, '0', 0)
+    gen.add_variable(TypeString.new, '0', 0)
 
     gen.write(:PEEK, 0)
     gen.write(:PRINT)
@@ -58,7 +66,7 @@ class StandartLibrary
   def generate_int_to_string(gen)
     gen.label_function('int_to_string')
     gen.set_current_function('int_to_string')
-    gen.add_variable(:LIT_INT, '0', 0)
+    gen.add_variable(TypeInt.new, '0', 0)
 
     gen.write(:PEEK, 0)
     gen.write(:ITS)
@@ -68,7 +76,7 @@ class StandartLibrary
   def generate_string_to_int(gen)
     gen.label_function('string_to_int')
     gen.set_current_function('string_to_int')
-    gen.add_variable(:LIT_STR, '0', 0)
+    gen.add_variable(TypeString.new, '0', 0)
 
     gen.write(:PEEK, 0)
     gen.write(:STI)
@@ -78,7 +86,7 @@ class StandartLibrary
   def generate_float_to_string(gen)
     gen.label_function('float_to_string')
     gen.set_current_function('float_to_string')
-    gen.add_variable(:LIT_FLOAT, '0', 0)
+    gen.add_variable(TypeFloat.new, '0', 0)
 
     gen.write(:PEEK, 0)
     gen.write(:FTS)
@@ -88,7 +96,7 @@ class StandartLibrary
   def generate_allocate(gen)
     gen.label_function('allocate')
     gen.set_current_function('allocate')
-    gen.add_variable(:LIT_INT, '0', 0)
+    gen.add_variable(TypeInt.new, '0', 0)
 
     gen.write(:PEEK, 0)
     gen.write(:ALLOC)
@@ -98,7 +106,7 @@ class StandartLibrary
   def generate_sleep(gen)
     gen.label_function('sleep')
     gen.set_current_function('sleep')
-    gen.add_variable(:LIT_INT, '0', 0)
+    gen.add_variable(TypeInt.new, '0', 0)
 
     gen.write(:SLEEP, 0)
     gen.write(:RET)
@@ -131,9 +139,47 @@ class StandartLibrary
   def generate_set_color(gen)
     gen.label_function('set_color')
     gen.set_current_function('set_color')
-    gen.add_variable(:LIT_INT, '0', 0)
+    gen.add_variable(TypeInt.new, '0', 0)
 
     gen.write(:SETCOLOR)
+    gen.write(:RET)
+  end
+
+  def generate_r_key(gen)
+    gen.label_function('r_key')
+    gen.set_current_function('r_key')
+
+    gen.write(:R_KEY)
+    gen.write(:RET_V)
+  end
+
+  def generate_ascii_to_char(gen)
+    gen.label_function('ascii_to_char')
+    gen.set_current_function('ascii_to_char')
+    gen.add_variable(TypeInt.new, '0', 0)
+
+    gen.write(:PEEK, 0)
+    gen.write(:ATC)
+    gen.write(:RET_V)
+  end
+
+  def generate_rblc(gen)
+    gen.label_function('rblc')
+    gen.set_current_function('rblc')
+    gen.add_variable(TypeString.new, '0', 0)
+
+    gen.write(:PEEK, 0)
+    gen.write(:RBLC)
+    gen.write(:RET)
+  end
+
+  def generate_bblc(gen)
+    gen.label_function('bblc')
+    gen.set_current_function('bblc')
+    gen.add_variable(TypeString.new, '0', 0)
+
+    gen.write(:PEEK, 0)
+    gen.write(:BBLC)
     gen.write(:RET)
   end
 end

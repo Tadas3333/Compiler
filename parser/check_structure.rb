@@ -11,7 +11,6 @@ class StructureStatus
 
   def initialize
     @parents_stack = []
-    @return_found = false
     @main_found = false
   end
 
@@ -54,18 +53,12 @@ class FunctionDefinition < Definition
     if @name.value == 'main'
       ss.main_found = true
 
-      if @ret_type != :LIT_INT
+      if @ret_type.class.name != 'TypeInt'
         NoExitError.new("#{@name.value} function return type is not integer", Status.new(@name.file_name, @name.line))
       end
     end
 
-    ss.return_found = false
     @body.check_structure(ss)
-
-    if @ret_type != :VOID && !ss.return_found
-      NoExitError.new("no return statement in '#{@name.value}'", Status.new(@name.file_name, @name.line))
-    end
-
     ss.parents_stack.pop
   end
 end
@@ -148,7 +141,6 @@ end
 
 class ReturnStatement < Statement
   def check_structure(ss)
-    ss.return_found = true
   end
 end
 

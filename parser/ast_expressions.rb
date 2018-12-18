@@ -114,3 +114,99 @@ class VarExpression < Expression
   def print(p)
   end
 end
+class Type < Node
+end
+
+class TypeInt < Type
+  attr_reader :tkn
+
+  def initialize(token = nil)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+  end
+
+  def print(p)
+  end
+end
+
+class TypeFloat < Type
+  attr_reader :tkn
+
+  def initialize(token = nil)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+  end
+
+  def print(p)
+  end
+end
+
+class TypeString < Type
+  attr_reader :tkn
+
+  def initialize(token = nil)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+  end
+
+  def print(p)
+  end
+end
+
+class TypeVoid < Type
+  attr_reader :tkn
+
+  def initialize(token = nil)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+  end
+
+  def print(p)
+  end
+end
+
+class TypeBool < Type
+  attr_reader :tkn
+
+  def initialize(token = nil)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+  end
+
+  def print(p)
+  end
+end
+
+class TypePointer < Type
+  attr_reader :inner
+  attr_reader :tkn
+
+  def initialize(token = nil, inner)
+    if token == nil
+      @tkn = Token.new('0', 0, '0', '0')
+    else
+      @tkn = token
+    end
+
+    @inner = inner
+  end
+
+  def print(p)
+    p.print('inner', @inner)
+  end
+end

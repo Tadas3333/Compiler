@@ -2,24 +2,6 @@
 class Parser
   def parse_function_statement
     f_type = parse_type
-    f_pointer_depth = 0
-
-    while @cur_token.name == :OP_MULTIPLY do
-      f_pointer_depth += 1
-      next_token
-    end
-
-    if f_pointer_depth > 0
-      case f_type
-      when :LIT_INT; f_type= :INT_POINTER;
-      when :LIT_FLOAT; f_type = :FLOAT_POINTER;
-      when :BOOL; f_type = :BOOL_POINTER;
-      when :LIT_STR; f_type = :STRING_POINTER;
-      else
-        token_error('void pointer')
-      end
-    end
-
     f_ident = expect(:IDENT)
     params = Parameters.new
 
@@ -27,24 +9,6 @@ class Parser
 
     if @cur_token.name != :OP_PAREN_C
       p_type = parse_type
-      pointer_depth = 0
-
-      while @cur_token.name == :OP_MULTIPLY
-        pointer_depth += 1
-        next_token
-      end
-
-      if pointer_depth > 0
-        case p_type
-        when :LIT_INT; p_type = :INT_POINTER;
-        when :LIT_FLOAT; p_type = :FLOAT_POINTER;
-        when :BOOL; p_type = :BOOL_POINTER;
-        when :LIT_STR; p_type = :STRING_POINTER;
-        else
-          token_error('void pointer')
-        end
-      end
-
       p_ident = expect(:IDENT)
       p_value = nil
 
@@ -53,31 +17,12 @@ class Parser
         p_value = parse_expression
       end
 
-      params.add_parameter(Parameter.new(p_type, p_ident, p_value, pointer_depth))
+      params.add_parameter(Parameter.new(p_type, p_ident, p_value))
     end
 
     while @cur_token.name != :OP_PAREN_C
       expect(:S_COM)
       p_type = parse_type
-
-      pointer_depth = 0
-
-      while @cur_token.name == :OP_MULTIPLY
-        pointer_depth += 1
-        next_token
-      end
-
-      if pointer_depth > 0
-        case p_type
-        when :LIT_INT; p_type = :INT_POINTER;
-        when :LIT_FLOAT; p_type = :FLOAT_POINTER;
-        when :BOOL; p_type = :BOOL_POINTER;
-        when :LIT_STR; p_type = :STRING_POINTER;
-        else
-          token_error('void pointer')
-        end
-      end
-
       p_ident = expect(:IDENT)
       p_value = nil
 
@@ -86,12 +31,12 @@ class Parser
         p_value = parse_expression
       end
 
-      params.add_parameter(Parameter.new(p_type, p_ident, p_value, pointer_depth))
+      params.add_parameter(Parameter.new(p_type, p_ident, p_value))
     end
 
     next_token
     f_statements = parse_statement_region
-    return FunctionDefinition.new(f_ident, params, f_type, f_pointer_depth, f_statements)
+    return FunctionDefinition.new(f_ident, params, f_type, f_statements)
   end
 
   def parse_statement_region
@@ -157,25 +102,6 @@ class Parser
 
   def parse_declaration_statement
     v_type = parse_type
-
-    if @cur_token.name == :OP_MULTIPLY
-      case v_type
-      when :LIT_INT; v_type = :INT_POINTER
-      when :LIT_FLOAT; v_type = :FLOAT_POINTER
-      when :LIT_STR; v_type = :STRING_POINTER
-      when :BOOL; v_type = :BOOL_POINTER
-      when :VOID; token_error('void pointer')
-      else raise 'unknown type'
-      end
-    end
-
-    pointer_depth = 0
-
-    while @cur_token.name == :OP_MULTIPLY
-      pointer_depth += 1
-      next_token
-    end
-
     v_name = expect(:IDENT)
     v_expr = nil
 
@@ -187,7 +113,7 @@ class Parser
       expect(:S_SCOL)
     end
 
-    return DeclarationStatement.new(v_type, v_name, v_expr, pointer_depth)
+    return DeclarationStatement.new(v_type, v_name, v_expr)
   end
 
   def parse_if_statement
@@ -263,7 +189,5 @@ class Parser
     else
       token_error("Unexpected type! Found #{@cur_token.name}")
     end
-
-
   end
 end

@@ -1,3 +1,6 @@
+require 'io/console'
+require 'timeout'
+require 'colorize'
 
 class TrueClass; def to_i; 1; end; end
 class FalseClass; def to_i; 0; end; end
@@ -69,17 +72,31 @@ class VirtualMachine
       when 3300; poke_p;
       when 3400; size = pop; push(allocate_memory(size));
       when 3500; indx = load_operand; sleep((@memory[@fp+indx].to_f)/1000);
-      when 3600; system "cls";
+      when 3600; puts "\e[H\e[2J";
       when 3700
-        if File.read("keys.txt") == '1'
-          push(1)
-        else
+        begin
+          status = Timeout::timeout(0.05) {
+            c = STDIN.getch
+            if c == 'a'
+              push(1)
+            else
+              push(0)
+            end
+          }
+        rescue Timeout::Error
           push(0)
         end
       when 3800
-        if File.read("keys.txt") == '2'
-          push(1)
-        else
+        begin
+          status = Timeout::timeout(0.05) {
+            c = STDIN.getch
+            if c == 'd'
+              push(1)
+            else
+              push(0)
+            end
+          }
+        rescue Timeout::Error
           push(0)
         end
       when 3900
@@ -91,6 +108,38 @@ class VirtualMachine
         when 4; print "\e[32m"
         else; print "\e[0m"
         end
+      when 4000
+        begin
+          status = Timeout::timeout(0.05) {
+            c = STDIN.getch
+            if c == 'r'
+              push(1)
+            else
+              push(0)
+            end
+          }
+        rescue Timeout::Error
+          push(0)
+        end
+      when 4100
+        value = pop
+        push(value.chr)
+      when 4200
+         value = pop;
+
+         unless value.is_a?(String)
+           value = @strings.at(value)
+         end
+
+         print "#{value}".colorize(:background => :red)
+       when 4300
+          value = pop;
+
+          unless value.is_a?(String)
+            value = @strings.at(value)
+          end
+
+          print "#{value}".colorize(:background => :blue)
       else; raise "unknown instruction #{opcode}"
       end
 

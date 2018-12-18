@@ -44,6 +44,10 @@ class Instructions
     when :LEFT_KEY; return Instruction.new(name, 3700, 0)
     when :RIGHT_KEY; return Instruction.new(name, 3800, 0)
     when :SETCOLOR; return Instruction.new(name, 3900, 0)
+    when :R_KEY; return Instruction.new(name, 4000, 0)
+    when :ATC; return Instruction.new(name, 4100, 0)
+    when :RBLC; return Instruction.new(name, 4200, 0)
+    when :BBLC; return Instruction.new(name, 4300, 0)
     else; raise "#{name} instruction not implemented"
     end
   end

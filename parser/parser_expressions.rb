@@ -119,7 +119,6 @@ class Parser
 
   def parse_pointer
     s_ident = expect(:IDENT)
-
     index_exprs = []
 
     while @cur_token.name == :OP_SQBR_O

@@ -59,31 +59,28 @@ class Parser
   ##############################################################################
 
   def parse_type
+    r_type = nil
+    tkn = @cur_token
     case @cur_token.name
     when :KW_INT
-      next_token
-      return :LIT_INT
+      r_type = TypeInt.new(tkn)
     when :KW_STRING
-      next_token
-      return :LIT_STR
+      r_type = TypeString.new(tkn)
     when :KW_FLOAT
-      next_token
-      return :LIT_FLOAT
+      r_type = TypeFloat.new(tkn)
     when :KW_VOID
-      next_token
-      return :VOID
+      r_type = TypeVoid.new(tkn)
     when :KW_TYPE_BOOL
-      next_token
-      return :BOOL
+      r_type = TypeBool.new(tkn)
     else; token_error("Unexpected type! Found #{@cur_token.name}")
     end
-  end
-end
+    next_token
 
-def is_pointer_type?(type)
-  if type == :INT_POINTER || type == :FLOAT_POINTER || type == :BOOL_POINTER || type == :STRING_POINTER
-    return true
-  end
+    while(@cur_token.name == :OP_MULTIPLY)
+      r_type = TypePointer.new(tkn, r_type)
+      next_token
+    end
 
-  false
+    r_type
+  end
 end
