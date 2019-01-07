@@ -13,9 +13,22 @@ class Parser
   end
 
   def parse_operator_and
-    left = parse_relational
+    left = parse_operator_or
 
     while @cur_token.name == :OP_DAND
+      retrn_tkn = @cur_token
+      next_token
+      right = parse_operator_or
+      left = BinaryExpression.new(retrn_tkn.name, left, right)
+    end
+
+    left
+  end
+
+  def parse_operator_or
+    left = parse_relational
+
+    while @cur_token.name == :OP_DOR
       retrn_tkn = @cur_token
       next_token
       right = parse_relational

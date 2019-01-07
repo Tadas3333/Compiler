@@ -52,8 +52,8 @@ class VirtualMachine
       when 2100; b = pop; a = pop; push((a != b).to_i);
       when 2200; b = pop; a = pop; push((a > b).to_i);
       when 2300; b = pop; a = pop; push((a < b).to_i);
-      when 2400; b = pop; a = pop; push((a && b).to_i);
-      when 2500; b = pop; a = pop; push((a || b).to_i);
+      when 2400; b = pop; a = pop; push((to_bool(a) && to_bool(b)).to_i);
+      when 2500; b = pop; a = pop; push((to_bool(a) || to_bool(b)).to_i);
       when 2600
          value = pop;
 
@@ -298,5 +298,13 @@ class VirtualMachine
       indx += 1
     end
     puts "]"
+  end
+
+  def to_bool(val)
+    if val >= 1
+      return true
+    end
+
+    false
   end
 end
